@@ -1,0 +1,16 @@
+# Test configuration for Kruize Optimizer unit tests
+quarkus:
+  log:
+    level: INFO
+    category:
+      "com.kruize.optimizer":
+        level: DEBUG
+
+# Target labels configuration for testing
+kruize:
+  target:
+    labels:
+      json: '["kruize/autotune=enabled", "custom/label=custom-value"]'
+      limit: 5
+
+
