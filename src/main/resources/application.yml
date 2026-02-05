@@ -38,4 +38,4 @@ kruize:
       # Max number of labels to process
       limit: ${KRUIZE_TARGET_LABEL_LIMIT:10}
       # Pass labels as a JSON String (Object or Array of "key=value")
-      json: '${KRUIZE_TARGET_LABELS:{"kruize/autotune": "enabled"}}'
+      json: '${KRUIZE_TARGET_LABELS:["kruize/autotune=enabled"]}'
