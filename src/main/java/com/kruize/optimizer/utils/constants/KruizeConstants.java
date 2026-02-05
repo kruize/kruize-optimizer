@@ -13,40 +13,40 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package com.kruize.optimizer.utils;
+package com.kruize.optimizer.utils.constants;
 
-public class OptimizerConstants {
+public class KruizeConstants {
+    // Private constructor to prevent instantiation
+    private KruizeConstants() {}
 
-    // contains constants related to Kruize application
-    public class KruizeClientConstants {
+    public class ApiEndpoints {
+        // Private constructor to prevent instantiation
+        private ApiEndpoints() {} 
 
-        // query params and other general constants
-        public static final String VERBOSE = "verbose";
-        public static final String NAME = "name";
-
-        // list APIs
+        // datasource APIs
         public static final String LIST_DATASOURCE_ENDPOINT = "/datasources";
-        public static final String LIST_METADATA_PROFILE_ENDPOINT = "/listMetadataProfiles";
-        public static final String LIST_METRIC_PROFILE_ENDPOINT = "/listMetricProfiles";
-        public static final String LIST_LAYERS_ENDPOINT = "/listLayers";
-        public static final String LIST_EXPERIMENTS_ENDPOINT = "/listExperiments";
 
-        // create APIs
+        // metadata profile API
         public static final String CREATE_METADATA_PROFILE_ENDPOINT = "/createMetadataProfile";
-        public static final String CREATE_METRIC_PROFILE_ENDPOINT = "/createMetricProfile";
-        public static final String CREATE_LAYERS_ENDPOINT = "/createLayer";
-
-        // update APIs
+        public static final String LIST_METADATA_PROFILE_ENDPOINT = "/listMetadataProfiles";
         public static final String UPDATE_METADATA_PROFILE_ENDPOINT = "/updateMetadataProfile";
+
+        // metric profile API
+        public static final String CREATE_METRIC_PROFILE_ENDPOINT = "/createMetricProfile";
+        public static final String LIST_METRIC_PROFILE_ENDPOINT = "/listMetricProfiles";
         public static final String UPDATE_METRIC_PROFILE_ENDPOINT = "/updateMetricProfile";
+
+        // layers API
+        public static final String CREATE_LAYERS_ENDPOINT = "/createLayer";
+        public static final String LIST_LAYERS_ENDPOINT = "/listLayers";
+
+        // experiment APIs
+        public static final String LIST_EXPERIMENTS_ENDPOINT = "/listExperiments";
 
         // bulk APIs
         public static final String BULK_ENDPOINT = "/bulk";
         public static final String JOB_ID = "job_id";
+
     }
 
-    // contains generic constants related to Optimizer application
-    public class GenericOptimizerConstants {
-        public static final String STARTUP_MESSAGE = "Kruize Optimizer Service is STARTED!";
-    }
 }
