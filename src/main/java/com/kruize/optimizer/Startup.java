@@ -15,9 +15,11 @@
  *******************************************************************************/
 package com.kruize.optimizer;
 
+import com.kruize.optimizer.utils.TargetLabelUtils;
 import io.quarkus.runtime.StartupEvent;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
+import jakarta.inject.Inject;
 import org.jboss.logging.Logger;
 
 /**
@@ -28,12 +30,17 @@ public class Startup {
 
     private static final Logger LOG = Logger.getLogger(Startup.class);
 
+    @Inject
+    TargetLabelUtils targetLabelUtils;
+
     /**
      * Executes at the end of application startup.
-     * 
+     *
      * @param ev The Quarkus StartupEvent.
      */
     void onStart(@Observes StartupEvent ev) {
+        // initialization of target labels
+        targetLabelUtils.getTargetLabels();
         LOG.info("Kruize Optimizer Service is STARTED!");
     }
 }
