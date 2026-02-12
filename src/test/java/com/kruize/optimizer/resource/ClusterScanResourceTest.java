@@ -19,6 +19,7 @@ import com.kruize.optimizer.exceptions.clusterScanExceptions.ClusterScanExceptio
 import com.kruize.optimizer.exceptions.clusterScanExceptions.InvalidParameterException;
 import com.kruize.optimizer.exceptions.clusterScanExceptions.ResourceNotFoundException;
 import com.kruize.optimizer.exceptions.targetLabelsProcessing.InvalidTargetLabelFormatException;
+import com.kruize.optimizer.model.ApiResponse;
 import com.kruize.optimizer.model.ClusterScanResult;
 import com.kruize.optimizer.model.EnableOptimizationRequest;
 import com.kruize.optimizer.service.WorkloadLabelService;
@@ -84,12 +85,16 @@ class ClusterScanResourceTest {
         when(scanService.scanCluster(true)).thenReturn(mockScanResult);
 
         // Act
-        ClusterScanResult result = resource.scan(true);
+        Response response = resource.scan(true);
 
         // Assert
-        assertThat(result).isNotNull();
-        assertThat(result.getNamespaces()).hasSize(TEST_NAMESPACE_COUNT);
-        assertThat(result.getWorkloads()).hasSize(TEST_WORKLOAD_COUNT);
+        assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
+        ApiResponse<ClusterScanResult> apiResponse = (ApiResponse<ClusterScanResult>) response.getEntity();
+        assertThat(apiResponse).isNotNull();
+        assertThat(apiResponse.isSuccess()).isTrue();
+        assertThat(apiResponse.getData()).isNotNull();
+        assertThat(apiResponse.getData().getNamespaces()).hasSize(TEST_NAMESPACE_COUNT);
+        assertThat(apiResponse.getData().getWorkloads()).hasSize(TEST_WORKLOAD_COUNT);
         verify(scanService, times(1)).scanCluster(true);
     }
 
@@ -100,29 +105,36 @@ class ClusterScanResourceTest {
         when(scanService.scanCluster(false)).thenReturn(mockScanResult);
 
         // Act
-        ClusterScanResult result = resource.scan(false);
+        Response response = resource.scan(false);
 
         // Assert
-        assertThat(result).isNotNull();
-        assertThat(result.getNamespaces()).isNotEmpty();
-        assertThat(result.getWorkloads()).isNotEmpty();
+        assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
+        ApiResponse<ClusterScanResult> apiResponse = (ApiResponse<ClusterScanResult>) response.getEntity();
+        assertThat(apiResponse).isNotNull();
+        assertThat(apiResponse.isSuccess()).isTrue();
+        assertThat(apiResponse.getData()).isNotNull();
+        assertThat(apiResponse.getData().getNamespaces()).isNotEmpty();
+        assertThat(apiResponse.getData().getWorkloads()).isNotEmpty();
         verify(scanService, times(1)).scanCluster(false);
     }
 
     @Test
-    @DisplayName("Should return empty result when ClusterScanException occurs")
-    void testScanCluster_WhenExceptionOccurs_ReturnsEmptyResult() {
+    @DisplayName("Should return error response when ClusterScanException occurs")
+    void testScanCluster_WhenExceptionOccurs_ReturnsErrorResponse() {
         // Arrange
         when(scanService.scanCluster(anyBoolean()))
                 .thenThrow(new ClusterScanException("Cluster scan failed"));
 
         // Act
-        ClusterScanResult result = resource.scan(true);
+        Response response = resource.scan(true);
 
         // Assert
-        assertThat(result).isNotNull();
-        assertThat(result.getNamespaces()).isEmpty();
-        assertThat(result.getWorkloads()).isEmpty();
+        assertThat(response.getStatus()).isEqualTo(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
+        ApiResponse<?> apiResponse = (ApiResponse<?>) response.getEntity();
+        assertThat(apiResponse).isNotNull();
+        assertThat(apiResponse.isSuccess()).isFalse();
+        assertThat(apiResponse.getError()).contains("Cluster scan failed");
+        assertThat(apiResponse.getData()).isNull();
         verify(scanService, times(1)).scanCluster(true);
     }
 
@@ -142,7 +154,9 @@ class ClusterScanResourceTest {
 
         // Assert
         assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
-        assertThat(response.getEntity().toString()).contains("message");
+        ApiResponse<?> apiResponse = (ApiResponse<?>) response.getEntity();
+        assertThat(apiResponse.isSuccess()).isTrue();
+        assertThat(apiResponse.getMessage()).isNotNull();
         verify(targetLabelUtils, times(1)).getDefaultLabel();
         verify(labelService, times(1)).labelNamespace(TestDataFactory.TEST_NAMESPACE, defaultLabels);
         verify(targetLabelUtils, never()).validateLabels(any());
@@ -179,7 +193,9 @@ class ClusterScanResourceTest {
 
         // Assert
         assertThat(response.getStatus()).isEqualTo(Response.Status.BAD_REQUEST.getStatusCode());
-        assertThat(response.getEntity().toString()).contains("error");
+        ApiResponse<?> apiResponse = (ApiResponse<?>) response.getEntity();
+        assertThat(apiResponse.isSuccess()).isFalse();
+        assertThat(apiResponse.getError()).isNotNull();
         verify(labelService, never()).labelNamespace(anyString(), anyMap());
     }
 
@@ -194,7 +210,9 @@ class ClusterScanResourceTest {
 
         // Assert
         assertThat(response.getStatus()).isEqualTo(Response.Status.BAD_REQUEST.getStatusCode());
-        assertThat(response.getEntity().toString()).contains("error");
+        ApiResponse<?> apiResponse = (ApiResponse<?>) response.getEntity();
+        assertThat(apiResponse.isSuccess()).isFalse();
+        assertThat(apiResponse.getError()).isNotNull();
         verify(labelService, never()).labelNamespace(anyString(), anyMap());
     }
 
@@ -213,7 +231,9 @@ class ClusterScanResourceTest {
 
         // Assert
         assertThat(response.getStatus()).isEqualTo(Response.Status.NOT_FOUND.getStatusCode());
-        assertThat(response.getEntity().toString()).contains("error");
+        ApiResponse<?> apiResponse = (ApiResponse<?>) response.getEntity();
+        assertThat(apiResponse.isSuccess()).isFalse();
+        assertThat(apiResponse.getError()).isNotNull();
         verify(labelService, times(1)).labelNamespace(anyString(), anyMap());
     }
 
@@ -236,7 +256,9 @@ class ClusterScanResourceTest {
 
         // Assert
         assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
-        assertThat(response.getEntity().toString()).contains("message");
+        ApiResponse<?> apiResponse = (ApiResponse<?>) response.getEntity();
+        assertThat(apiResponse.isSuccess()).isTrue();
+        assertThat(apiResponse.getMessage()).isNotNull();
         verify(labelService, times(1)).labelWorkload(
                 TestDataFactory.TEST_NAMESPACE,
                 TestDataFactory.TEST_DEPLOYMENT_NAME,
@@ -288,7 +310,9 @@ class ClusterScanResourceTest {
 
         // Assert
         assertThat(response.getStatus()).isEqualTo(Response.Status.BAD_REQUEST.getStatusCode());
-        assertThat(response.getEntity().toString()).contains("error");
+        ApiResponse<?> apiResponse = (ApiResponse<?>) response.getEntity();
+        assertThat(apiResponse.isSuccess()).isFalse();
+        assertThat(apiResponse.getError()).isNotNull();
         verify(targetLabelUtils, times(1)).validateLabels(invalidLabels);
         verify(labelService, never()).labelWorkload(anyString(), anyString(), anyString(), anyMap());
     }
@@ -311,7 +335,9 @@ class ClusterScanResourceTest {
 
         // Assert
         assertThat(response.getStatus()).isEqualTo(Response.Status.NOT_FOUND.getStatusCode());
-        assertThat(response.getEntity().toString()).contains("error");
+        ApiResponse<?> apiResponse = (ApiResponse<?>) response.getEntity();
+        assertThat(apiResponse.isSuccess()).isFalse();
+        assertThat(apiResponse.getError()).isNotNull();
         verify(labelService, times(1)).labelWorkload(anyString(), anyString(), anyString(), anyMap());
     }
 
@@ -333,7 +359,9 @@ class ClusterScanResourceTest {
 
         // Assert
         assertThat(response.getStatus()).isEqualTo(Response.Status.BAD_REQUEST.getStatusCode());
-        assertThat(response.getEntity().toString()).contains("error");
+        ApiResponse<?> apiResponse = (ApiResponse<?>) response.getEntity();
+        assertThat(apiResponse.isSuccess()).isFalse();
+        assertThat(apiResponse.getError()).isNotNull();
     }
 
     @Test
