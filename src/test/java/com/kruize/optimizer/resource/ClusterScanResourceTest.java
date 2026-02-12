@@ -64,10 +64,13 @@ class ClusterScanResourceTest {
     private ClusterScanResult mockScanResult;
     private Map<String, String> defaultLabels;
     private Map<String, String> customLabels;
+    
+    private static final int TEST_NAMESPACE_COUNT = 3;
+    private static final int TEST_WORKLOAD_COUNT = 5;
 
     @BeforeEach
     void setUp() {
-        mockScanResult = TestDataFactory.createClusterScanResult(3, 5);
+        mockScanResult = TestDataFactory.createClusterScanResult(TEST_NAMESPACE_COUNT, TEST_WORKLOAD_COUNT);
         defaultLabels = TestDataFactory.createDefaultLabels();
         customLabels = TestDataFactory.createCustomLabels();
     }
@@ -85,8 +88,8 @@ class ClusterScanResourceTest {
 
         // Assert
         assertThat(result).isNotNull();
-        assertThat(result.getNamespaces()).hasSize(3);
-        assertThat(result.getWorkloads()).hasSize(5);
+        assertThat(result.getNamespaces()).hasSize(TEST_NAMESPACE_COUNT);
+        assertThat(result.getWorkloads()).hasSize(TEST_WORKLOAD_COUNT);
         verify(scanService, times(1)).scanCluster(true);
     }
 
