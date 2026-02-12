@@ -141,7 +141,7 @@ public class ClusterScanResource {
             if (request.getLabels() == null || request.getLabels().isEmpty()) {
                 // Use default label if none provided
                 labelsToApply = targetLabelUtils.getDefaultLabel();
-                LOG.info(MessageConstants.WarningMesaage.NO_TARGET_LABELS_WARNING);
+                LOG.info(MessageConstants.WarningMessage.NO_TARGET_LABELS_WARNING);
             } else {
                 // Validate that provided labels are in target labels
                 targetLabelUtils.validateLabels(request.getLabels());

@@ -19,14 +19,14 @@ public class MessageConstants {
     // Private constructor to prevent instantiation
     private MessageConstants() {}
     
-    public class WarningMesaage {
-        private WarningMesaage() {}
+    public static class WarningMessage {
+        private WarningMessage() {}
 
         public static final String NO_TARGET_LABELS_WARNING = "No target labels are configured. Using default label 'kruize/autotune=enabled'";
         public static final String LABEL_LIMIT_EXCEEDED_WARNING = "Label count %d exceeds limit %d.  Using default label 'kruize/autotune=enabled' to scan the workloads.";
     }
 
-    public class ErrorMessage {
+    public static class ErrorMessage {
         private ErrorMessage() {}
 
         public static final String INVALID_JSON_FORMAT_ERROR = "Invalid JSON format for kruize.target.labels.json. Must be an Array.";
@@ -50,13 +50,13 @@ public class MessageConstants {
         public static final String NO_LABELS_PROVIDED_ERROR = "No labels provided in the request";
     }
 
-    public class InfoMessage {
+    public static class InfoMessage {
         private InfoMessage() {}
 
         public static final String SCANNING_CLUSTER_INFO = "Scanning cluster for workloads";
     }
 
-    public class SuccessMessage {
+    public static class SuccessMessage {
         private SuccessMessage() {}
 
         public static final String STARTUP_MESSAGE = "Kruize Optimizer Service is STARTED!";

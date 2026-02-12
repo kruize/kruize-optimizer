@@ -68,7 +68,7 @@ public class TargetLabelUtils {
     void init() {
         // Checking if no target labels are present in configuration
         if (targetLabelsJson == null || targetLabelsJson.isBlank()) {
-            LOG.warn(MessageConstants.WarningMesaage.NO_TARGET_LABELS_WARNING);
+            LOG.warn(MessageConstants.WarningMessage.NO_TARGET_LABELS_WARNING);
             // Fallback to default if no valid labels were parsed
             targetLabels.put(OptimizerConstants.DEFAULT_LABEL_KEY, OptimizerConstants.DEFAULT_LABEL_VALUE);
             return;
@@ -112,7 +112,7 @@ public class TargetLabelUtils {
         
         // Fallback to default if no valid labels were parsed
         if (targetLabels.isEmpty()) {
-            LOG.warn(MessageConstants.WarningMesaage.NO_TARGET_LABELS_WARNING);
+            LOG.warn(MessageConstants.WarningMessage.NO_TARGET_LABELS_WARNING);
             targetLabels.put(OptimizerConstants.DEFAULT_LABEL_KEY, OptimizerConstants.DEFAULT_LABEL_VALUE);
         }
 

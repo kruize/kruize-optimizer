@@ -33,9 +33,9 @@ public class OptimizerConstants {
     public static final String TARGET_LABELS_LIMIT_CONFIG_PROPERTY_NAME = "kruize.target.labels.limit";
     
     
-    public class ApiEndpoints {
+    public static class ApiEndpoints {
         // Private constructor to prevent instantiation
-        private ApiEndpoints() {} 
+        private ApiEndpoints() {}
 
         // params
         public static final String SCAN_ALL_WORKLOADS_PARAM = "scan_all_workloads";
