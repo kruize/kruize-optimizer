@@ -41,15 +41,10 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class TargetLabelUtilsTest {
 
     private TargetLabelUtils targetLabelUtils;
-    private Map<String, String> validLabels;
-    private Map<String, String> invalidLabels;
 
     @BeforeEach
     void setUp() {
         targetLabelUtils = new TargetLabelUtils();
-        validLabels = TestDataFactory.createDefaultLabels();
-        invalidLabels = new HashMap<>();
-        invalidLabels.put("invalid-key", "invalid-value");
     }
 
     // ==================== Get Default Label Tests ====================
