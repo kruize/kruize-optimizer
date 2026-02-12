@@ -17,6 +17,7 @@ package com.kruize.optimizer.utils;
 
 import com.kruize.optimizer.exceptions.targetLabelsProcessing.InvalidTargetLabelFormatException;
 import com.kruize.optimizer.testutils.TestDataFactory;
+import com.kruize.optimizer.utils.constants.MessageConstants;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -78,7 +79,8 @@ class TargetLabelUtilsTest {
         
         // Act & Assert
         assertThatThrownBy(() -> targetLabelUtils.validateLabels(null))
-                .isInstanceOf(InvalidTargetLabelFormatException.class);
+                .isInstanceOf(InvalidTargetLabelFormatException.class)
+                .hasMessage(MessageConstants.ErrorMessage.NO_LABELS_PROVIDED_ERROR);
     }
 
     @Test
@@ -90,7 +92,8 @@ class TargetLabelUtilsTest {
         
         // Act & Assert
         assertThatThrownBy(() -> targetLabelUtils.validateLabels(emptyLabels))
-                .isInstanceOf(InvalidTargetLabelFormatException.class);
+                .isInstanceOf(InvalidTargetLabelFormatException.class)
+                .hasMessage(MessageConstants.ErrorMessage.NO_LABELS_PROVIDED_ERROR);
     }
 
     @Test
@@ -103,7 +106,8 @@ class TargetLabelUtilsTest {
         
         // Act & Assert
         assertThatThrownBy(() -> targetLabelUtils.validateLabels(labelsWithNullKey))
-                .isInstanceOf(InvalidTargetLabelFormatException.class);
+                .isInstanceOf(InvalidTargetLabelFormatException.class)
+                .hasMessage(MessageConstants.ErrorMessage.INVALID_LABEL_KEY_VALUE_ERROR);
     }
 
     @Test
@@ -116,7 +120,8 @@ class TargetLabelUtilsTest {
         
         // Act & Assert
         assertThatThrownBy(() -> targetLabelUtils.validateLabels(labelsWithEmptyKey))
-                .isInstanceOf(InvalidTargetLabelFormatException.class);
+                .isInstanceOf(InvalidTargetLabelFormatException.class)
+                .hasMessage(MessageConstants.ErrorMessage.INVALID_LABEL_KEY_VALUE_ERROR);
     }
 
     @Test
@@ -129,7 +134,8 @@ class TargetLabelUtilsTest {
         
         // Act & Assert
         assertThatThrownBy(() -> targetLabelUtils.validateLabels(labelsWithNullValue))
-                .isInstanceOf(InvalidTargetLabelFormatException.class);
+                .isInstanceOf(InvalidTargetLabelFormatException.class)
+                .hasMessage(MessageConstants.ErrorMessage.INVALID_LABEL_KEY_VALUE_ERROR);
     }
 
     @Test
@@ -142,7 +148,8 @@ class TargetLabelUtilsTest {
         
         // Act & Assert
         assertThatThrownBy(() -> targetLabelUtils.validateLabels(labelsWithEmptyValue))
-                .isInstanceOf(InvalidTargetLabelFormatException.class);
+                .isInstanceOf(InvalidTargetLabelFormatException.class)
+                .hasMessage(MessageConstants.ErrorMessage.INVALID_LABEL_KEY_VALUE_ERROR);
     }
 
     @Test
@@ -155,7 +162,8 @@ class TargetLabelUtilsTest {
         
         // Act & Assert
         assertThatThrownBy(() -> targetLabelUtils.validateLabels(labelsWithWhitespaceKey))
-                .isInstanceOf(InvalidTargetLabelFormatException.class);
+                .isInstanceOf(InvalidTargetLabelFormatException.class)
+                .hasMessage(MessageConstants.ErrorMessage.INVALID_LABEL_KEY_VALUE_ERROR);
     }
 
     @Test
@@ -168,7 +176,8 @@ class TargetLabelUtilsTest {
         
         // Act & Assert
         assertThatThrownBy(() -> targetLabelUtils.validateLabels(labelsWithWhitespaceValue))
-                .isInstanceOf(InvalidTargetLabelFormatException.class);
+                .isInstanceOf(InvalidTargetLabelFormatException.class)
+                .hasMessage(MessageConstants.ErrorMessage.INVALID_LABEL_KEY_VALUE_ERROR);
     }
 
     // ==================== isLabelInTargetLabels Tests ====================
