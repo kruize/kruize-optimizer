@@ -167,14 +167,31 @@ class TargetLabelUtilsTest {
 
     @Test
     @DisplayName("Should return true when label exists in target labels")
-    void testIsLabelInTargetLabels_WhenLabelExists_ReturnsTrue() {
+    void testIsLabelInTargetLabels_WhenLabelExists_ReturnsTrue() throws Exception {
+        // Arrange - Initialize target labels with default label
+        Field targetLabelsJsonField = TargetLabelUtils.class.getDeclaredField("targetLabelsJson");
+        targetLabelsJsonField.setAccessible(true);
+        String labelsJson = String.format("[\"%s=%s\"]",
+                TestDataFactory.DEFAULT_LABEL_KEY,
+                TestDataFactory.DEFAULT_LABEL_VALUE);
+        targetLabelsJsonField.set(targetLabelUtils, labelsJson);
+        
+        Field labelLimitField = TargetLabelUtils.class.getDeclaredField("labelLimit");
+        labelLimitField.setAccessible(true);
+        labelLimitField.setInt(targetLabelUtils, 10);
+        
+        // Call the init method using reflection
+        Method initMethod = TargetLabelUtils.class.getDeclaredMethod("init");
+        initMethod.setAccessible(true);
+        initMethod.invoke(targetLabelUtils);
+        
         // Act
         boolean result = targetLabelUtils.isLabelInTargetLabels(
                 TestDataFactory.DEFAULT_LABEL_KEY,
                 TestDataFactory.DEFAULT_LABEL_VALUE);
 
         // Assert
-        assertThat(result).isIn(true, false);
+        assertThat(result).isTrue();
     }
 
     @Test
@@ -199,6 +216,45 @@ class TargetLabelUtilsTest {
 
         // Assert
         assertThat(result).isFalse();
+    }
+
+    // ==================== Validate Labels with Multiple Labels Tests ====================
+
+    @Test
+    @DisplayName("Should successfully validate multiple labels within limit")
+    void testValidateLabels_WithMultipleLabelsWithinLimit_Success() throws Exception {
+        // Arrange
+        targetLabelUtils = new TargetLabelUtils();
+        
+        // Set up multiple labels within limit using reflection
+        Field targetLabelsJsonField = TargetLabelUtils.class.getDeclaredField("targetLabelsJson");
+        targetLabelsJsonField.setAccessible(true);
+        String labelsJson = "[\"label1=value1\", \"label2=value2\", \"label3=value3\"]";
+        targetLabelsJsonField.set(targetLabelUtils, labelsJson);
+        
+        Field labelLimitField = TargetLabelUtils.class.getDeclaredField("labelLimit");
+        labelLimitField.setAccessible(true);
+        labelLimitField.setInt(targetLabelUtils, 5); // Set limit to 5, so 3 labels are within limit
+        
+        // Call the init method using reflection
+        Method initMethod = TargetLabelUtils.class.getDeclaredMethod("init");
+        initMethod.setAccessible(true);
+        initMethod.invoke(targetLabelUtils);
+        
+        // Prepare labels to validate
+        Map<String, String> labelsToValidate = new HashMap<>();
+        labelsToValidate.put("label1", "value1");
+        labelsToValidate.put("label2", "value2");
+        
+        // Act & Assert - should not throw exception
+        targetLabelUtils.validateLabels(labelsToValidate);
+        
+        // Verify target labels were loaded correctly
+        Map<String, String> targetLabels = targetLabelUtils.getTargetLabels();
+        assertThat(targetLabels).hasSize(3);
+        assertThat(targetLabels).containsEntry("label1", "value1");
+        assertThat(targetLabels).containsEntry("label2", "value2");
+        assertThat(targetLabels).containsEntry("label3", "value3");
     }
 
     // ==================== Get Target Labels Tests ====================
