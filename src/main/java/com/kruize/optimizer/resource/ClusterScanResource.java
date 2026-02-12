@@ -19,6 +19,7 @@ import com.kruize.optimizer.exceptions.clusterScanExceptions.ClusterScanExceptio
 import com.kruize.optimizer.exceptions.clusterScanExceptions.InvalidParameterException;
 import com.kruize.optimizer.exceptions.clusterScanExceptions.ResourceNotFoundException;
 import com.kruize.optimizer.exceptions.targetLabelsProcessing.InvalidTargetLabelFormatException;
+import com.kruize.optimizer.model.ApiResponse;
 import com.kruize.optimizer.model.ClusterScanResult;
 import com.kruize.optimizer.model.EnableOptimizationRequest;
 import com.kruize.optimizer.service.WorkloadLabelService;
@@ -77,20 +78,19 @@ public class ClusterScanResource {
      *
      * @param scanAllWorkloads if true, scans all workloads; if false, only scans workloads
      *                         matching target labels (default: false)
-     * @return ClusterScanResult containing lists of namespaces and workloads found in the cluster
+     * @return Response containing ApiResponse with ClusterScanResult on success or error details on failure
      */
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public ClusterScanResult scan(@QueryParam(OptimizerConstants.ApiEndpoints.SCAN_ALL_WORKLOADS_PARAM) boolean scanAllWorkloads) {
+    public Response scan(@QueryParam(OptimizerConstants.ApiEndpoints.SCAN_ALL_WORKLOADS_PARAM) boolean scanAllWorkloads) {
         try {
-            return scanService.scanCluster(scanAllWorkloads);
+            ClusterScanResult result = scanService.scanCluster(scanAllWorkloads);
+            return Response.ok(ApiResponse.success(result)).build();
         } catch (ClusterScanException e) {
-            LOG.error(e.getMessage(), e);
-            // Return empty result on error
-            ClusterScanResult emptyResult = new ClusterScanResult();
-            emptyResult.setNamespaces(new java.util.ArrayList<>());
-            emptyResult.setWorkloads(new java.util.ArrayList<>());
-            return emptyResult;
+            LOG.error("Cluster scan failed", e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(ApiResponse.error("Cluster scan failed: " + e.getMessage()))
+                    .build();
         }
     }
 
@@ -162,24 +162,24 @@ public class ClusterScanResource {
                 
                 String successMessage = String.format(MessageConstants.SuccessMessage.WORKLOAD_LABELED_SUCCESS, workloadType, workloadName, namespace, labelsToApply);
                 LOG.info(successMessage);
-                return Response.ok(String.format("{\"message\": \"%s\"}", successMessage)).build();
+                return Response.ok(ApiResponse.successMessage(successMessage)).build();
             } else {
                 // Label namespace
                 labelService.labelNamespace(namespace, labelsToApply);
                 
                 String successMessage = String.format(MessageConstants.SuccessMessage.NAMESPACE_LABELED_SUCCESS, namespace);
                 LOG.info(successMessage);
-                return Response.ok(String.format("{\"message\": \"%s\"}", successMessage)).build();
+                return Response.ok(ApiResponse.successMessage(successMessage)).build();
             }
         } catch (InvalidParameterException | InvalidTargetLabelFormatException e) {
             LOG.error(e.getMessage());
             return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(String.format("{\"error\": \"%s\"}", e.getMessage()))
+                    .entity(ApiResponse.error(e.getMessage()))
                     .build();
         } catch (ResourceNotFoundException e) {
             LOG.error(e.getMessage());
             return Response.status(Response.Status.NOT_FOUND)
-                    .entity(String.format("{\"error\": \"%s\"}", e.getMessage()))
+                    .entity(ApiResponse.error(e.getMessage()))
                     .build();
         } catch (Exception e) {
             String errorMessage = String.format(
@@ -187,7 +187,7 @@ public class ClusterScanResource {
                     e.getMessage());
             LOG.error(errorMessage, e);
             return Response.serverError()
-                    .entity(String.format("{\"error\": \"%s\"}", errorMessage))
+                    .entity(ApiResponse.error(errorMessage))
                     .build();
         }
     }
