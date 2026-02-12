@@ -46,6 +46,7 @@ class TargetLabelUtilsTest {
 
     @BeforeEach
     void setUp() {
+        targetLabelUtils = new TargetLabelUtils();
         validLabels = TestDataFactory.createDefaultLabels();
         invalidLabels = new HashMap<>();
         invalidLabels.put("invalid-key", "invalid-value");
@@ -56,9 +57,6 @@ class TargetLabelUtilsTest {
     @Test
     @DisplayName("Should return default label")
     void testGetDefaultLabel_ReturnsCorrectLabel() {
-        // Arrange
-        targetLabelUtils = new TargetLabelUtils();
-        
         // Act
         Map<String, String> defaultLabel = targetLabelUtils.getDefaultLabel();
 
@@ -74,9 +72,6 @@ class TargetLabelUtilsTest {
     @Test
     @DisplayName("Should throw exception when validating null labels")
     void testValidateLabels_WhenLabelsAreNull_ThrowsException() {
-        // Arrange
-        targetLabelUtils = new TargetLabelUtils();
-        
         // Act & Assert
         assertThatThrownBy(() -> targetLabelUtils.validateLabels(null))
                 .isInstanceOf(InvalidTargetLabelFormatException.class)
@@ -87,7 +82,6 @@ class TargetLabelUtilsTest {
     @DisplayName("Should throw exception when validating empty labels")
     void testValidateLabels_WhenLabelsAreEmpty_ThrowsException() {
         // Arrange
-        targetLabelUtils = new TargetLabelUtils();
         Map<String, String> emptyLabels = new HashMap<>();
         
         // Act & Assert
@@ -100,7 +94,6 @@ class TargetLabelUtilsTest {
     @DisplayName("Should throw exception when label key is null")
     void testValidateLabels_WhenLabelKeyIsNull_ThrowsException() {
         // Arrange
-        targetLabelUtils = new TargetLabelUtils();
         Map<String, String> labelsWithNullKey = new HashMap<>();
         labelsWithNullKey.put(null, "value");
         
@@ -114,7 +107,6 @@ class TargetLabelUtilsTest {
     @DisplayName("Should throw exception when label key is empty")
     void testValidateLabels_WhenLabelKeyIsEmpty_ThrowsException() {
         // Arrange
-        targetLabelUtils = new TargetLabelUtils();
         Map<String, String> labelsWithEmptyKey = new HashMap<>();
         labelsWithEmptyKey.put("", "value");
         
@@ -128,7 +120,6 @@ class TargetLabelUtilsTest {
     @DisplayName("Should throw exception when label value is null")
     void testValidateLabels_WhenLabelValueIsNull_ThrowsException() {
         // Arrange
-        targetLabelUtils = new TargetLabelUtils();
         Map<String, String> labelsWithNullValue = new HashMap<>();
         labelsWithNullValue.put("key", null);
         
@@ -142,7 +133,6 @@ class TargetLabelUtilsTest {
     @DisplayName("Should throw exception when label value is empty")
     void testValidateLabels_WhenLabelValueIsEmpty_ThrowsException() {
         // Arrange
-        targetLabelUtils = new TargetLabelUtils();
         Map<String, String> labelsWithEmptyValue = new HashMap<>();
         labelsWithEmptyValue.put("key", "");
         
@@ -156,7 +146,6 @@ class TargetLabelUtilsTest {
     @DisplayName("Should throw exception when label key has only whitespace")
     void testValidateLabels_WhenLabelKeyIsWhitespace_ThrowsException() {
         // Arrange
-        targetLabelUtils = new TargetLabelUtils();
         Map<String, String> labelsWithWhitespaceKey = new HashMap<>();
         labelsWithWhitespaceKey.put("   ", "value");
         
@@ -170,7 +159,6 @@ class TargetLabelUtilsTest {
     @DisplayName("Should throw exception when label value has only whitespace")
     void testValidateLabels_WhenLabelValueIsWhitespace_ThrowsException() {
         // Arrange
-        targetLabelUtils = new TargetLabelUtils();
         Map<String, String> labelsWithWhitespaceValue = new HashMap<>();
         labelsWithWhitespaceValue.put("key", "   ");
         
@@ -185,24 +173,18 @@ class TargetLabelUtilsTest {
     @Test
     @DisplayName("Should return true when label exists in target labels")
     void testIsLabelInTargetLabels_WhenLabelExists_ReturnsTrue() {
-        // Arrange
-        targetLabelUtils = new TargetLabelUtils();
-        // Simulate target labels being set (in real scenario, this would be from config)
-        
         // Act
         boolean result = targetLabelUtils.isLabelInTargetLabels(
                 TestDataFactory.DEFAULT_LABEL_KEY,
                 TestDataFactory.DEFAULT_LABEL_VALUE);
 
+        // Assert
         assertThat(result).isIn(true, false);
     }
 
     @Test
     @DisplayName("Should return false when label does not exist in target labels")
     void testIsLabelInTargetLabels_WhenLabelDoesNotExist_ReturnsFalse() {
-        // Arrange
-        targetLabelUtils = new TargetLabelUtils();
-        
         // Act
         boolean result = targetLabelUtils.isLabelInTargetLabels(
                 "non-existent-key",
@@ -215,9 +197,6 @@ class TargetLabelUtilsTest {
     @Test
     @DisplayName("Should return false when label key exists but value is different")
     void testIsLabelInTargetLabels_WhenKeyExistsButValueDifferent_ReturnsFalse() {
-        // Arrange
-        targetLabelUtils = new TargetLabelUtils();
-        
         // Act
         boolean result = targetLabelUtils.isLabelInTargetLabels(
                 TestDataFactory.DEFAULT_LABEL_KEY,
@@ -232,9 +211,6 @@ class TargetLabelUtilsTest {
     @Test
     @DisplayName("Should return unmodifiable target labels map")
     void testGetTargetLabels_ReturnsUnmodifiableMap() {
-        // Arrange
-        targetLabelUtils = new TargetLabelUtils();
-        
         // Act
         Map<String, String> targetLabels = targetLabelUtils.getTargetLabels();
 
