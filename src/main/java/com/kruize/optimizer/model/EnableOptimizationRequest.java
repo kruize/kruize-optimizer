@@ -101,5 +101,3 @@ public class EnableOptimizationRequest {
                 '}';
     }
 }
-
-// Made with Bob
