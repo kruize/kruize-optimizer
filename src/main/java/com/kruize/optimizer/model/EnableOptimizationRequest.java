@@ -93,7 +93,7 @@ public class EnableOptimizationRequest {
 
     @Override
     public String toString() {
-        return "EnableAutotuneRequest{" +
+        return "EnableOptimizationRequest{" +
                 "namespace='" + namespace + '\'' +
                 ", workloadName='" + workloadName + '\'' +
                 ", workloadType='" + workloadType + '\'' +
