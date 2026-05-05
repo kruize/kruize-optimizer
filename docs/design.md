@@ -79,9 +79,10 @@ graph TB
 The resource layer handles HTTP requests and provides RESTful endpoints.
 
 **Key Resources:**
+- [`WebhookResource`](../src/main/java/com/kruize/optimizer/resource/WebhookResource.java) - Processes webhook events
+> NOTE: Resources apart from WebhookResource will be removed in next release
 - [`DatasourceResource`](../src/main/java/com/kruize/optimizer/resource/DatasourceResource.java) - Manages datasource operations
 - [`JobsResource`](../src/main/java/com/kruize/optimizer/resource/JobsResource.java) - Handles optimization job operations
-- [`WebhookResource`](../src/main/java/com/kruize/optimizer/resource/WebhookResource.java) - Processes webhook events
 - [`MetadataProfileResource`](../src/main/java/com/kruize/optimizer/resource/MetadataProfileResource.java) - Manages metadata profiles
 - [`MetricProfileResource`](../src/main/java/com/kruize/optimizer/resource/MetricProfileResource.java) - Manages metric profiles
 - [`LayerResource`](../src/main/java/com/kruize/optimizer/resource/LayerResource.java) - Handles layer configurations
