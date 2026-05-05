@@ -86,18 +86,7 @@ The application will start on `http://localhost:8080` with:
 
 ### Kruize Dependency
 
-**IMPORTANT**: Kruize Optimizer requires Kruize to be already running in your cluster.
-
-**Recommended Installation Methods:**
-
-1. **Using Kruize Operator** (Recommended - Version >= 0.0.5)
-   - The Kruize Operator automatically installs the Optimizer
-   - No need to install Optimizer separately
-   - Repository: https://github.com/kruize/kruize-operator/
-
-2. **Using Autotune**
-   - Alternative installation method
-   - Repository: https://github.com/kruize/autotune/
+**IMPORTANT**: Kruize Optimizer requires Kruize to be already running. See the [Installation Guide - Important Notes](installation.md#important-notes) for detailed information about Kruize dependencies and installation methods.
 
 ### IDE Setup
 

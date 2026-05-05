@@ -47,7 +47,7 @@ kubectl version --client
 
 **Recommended Installation Methods:**
 
-1. **Using Kruize Operator** (Recommended - Version >= 0.0.5)
+1. **Using Kruize Operator** (Version >= 0.0.5)
    - The Kruize Operator automatically installs the Optimizer
    - No need to install Optimizer separately
    - Repository: https://github.com/kruize/kruize-operator/

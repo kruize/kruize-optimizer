@@ -10,13 +10,7 @@ Complete API documentation for Kruize Optimizer REST endpoints.
 - [Response Format](#response-format)
 - [Error Handling](#error-handling)
 - [API Endpoints](#api-endpoints)
-  - [Status API](#status-api)
-  - [Datasource API](#datasource-api)
-  - [Jobs API](#jobs-api)
   - [Webhook API](#webhook-api)
-  - [Metadata Profile API](#metadata-profile-api)
-  - [Metric Profile API](#metric-profile-api)
-  - [Layer API](#layer-api)
 - [Examples](#examples)
 
 ## Base URL
