@@ -86,7 +86,7 @@ kubectl port-forward -n monitoring svc/kruize-optimizer 8080:8080
 
 ### OpenShift Installation
 
-1. Login to your OpenShift cluster:
+1. Log in to your OpenShift cluster:
 ```bash
 oc login <cluster-url>
 ```
@@ -141,7 +141,7 @@ Before running locally, update the Kruize URL in [`src/main/resources/applicatio
 
 ```yaml
 # Update this section with your Kruize instance URL
-# Use different port-mapping for kruize pod, as 8080 will be used by optimizer
+# Use different port-mapping for Kruize pod, as 8080 will be used by optimizer
 kruize:
   url: http://localhost:9090  # Change to your Kruize URL
 ```

@@ -14,12 +14,12 @@ This document describes the architecture, design principles, and key components 
 
 ## Overview
 
-Kruize Optimizer is a cloud-native optimization service designed to provide support for Kruize (https://github.com/kruize/autotune) to automatically create experiments and manage Kruize profiles. I
+Kruize Optimizer is a cloud-native optimization service designed to provide support for Kruize (https://github.com/kruize/autotune) to automatically create experiments and manage Kruize profiles.
 
 ### Key Features
 
-- **Automatic Experiment Creation**: Automatically Kruize create experiments based on user-defined labels
-- **Profile Management Support**: Manages and install missing profiles in Kruize
+- **Automatic Experiment Creation**: Automatically create experiments in Kruize based on user-defined labels.
+- **Profile Management Support**: Manages and installs missing profiles in Kruize.
 - **Webhook Integration**: Event-driven architecture for real-time updates
 
 ## Architecture
@@ -124,9 +124,9 @@ Profile-based configuration for flexibility and extensibility.
 
 **Configuration Types:**
 - **Metadata Profiles**: Define cluster and application metadata
-TODO: add metadata profiles file link
+  - [`cluster-metadata-local-monitoring.json`](../src/main/resources/configs/v1.0/metadata-profiles/cluster-metadata-local-monitoring.json) - Cluster metadata profile
 - **Metric Profiles**: Specify metrics to collect and analyze
-TODO: add metric prifile file link
+  - [`resource-optimization-local-monitoring.json`](../src/main/resources/configs/v1.0/metric-profiles/resource-optimization-local-monitoring.json) - Resource optimization metric profile
 - **Layer Configurations**: Container, JVM, and framework-specific settings
 
 **Configuration Files:**
@@ -237,7 +237,7 @@ The service is designed to be stateless where possible:
 ## Future Enhancements Planned 
 
 - Improve Logging and Tracing
-- Add support for custom prometheus metrics
+- Add support for custom Prometheus metrics
 - Add support for multiple custom pre-configured profiles for dev/prod clusters
 
 ---
