@@ -1,0 +1,8 @@
+# Python dependencies for E2E tests
+pytest>=7.4.0
+pytest-timeout>=2.1.0
+pytest-html>=3.2.0
+pyyaml>=6.0
+requests>=2.31.0
+kubernetes>=27.2.0
+urllib3>=2.0.0

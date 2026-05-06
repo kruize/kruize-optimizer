@@ -1,0 +1,53 @@
+# E2E Test Configuration for Kruize Optimizer
+
+# Cluster configuration
+cluster:
+  type: kind  # kind or openshift
+  name: kruize-e2e-test
+  namespace: monitoring
+  # Namespace mapping for optimizer pod based on cluster type
+  optimizer_namespace:
+    kind: monitoring
+    openshift: openshift-tuning
+  
+# Image configuration
+images:
+  kruize_operator: "quay.io/kruize/kruize-operator:latest"
+  kruize_optimizer: "quay.io/kruize/kruize-optimizer:0.0.1"
+  kruize: "quay.io/kruize/autotune_operator:latest"
+  kruize_ui: "quay.io/kruize/kruize-ui:latest"
+  
+# Test timeouts (in seconds)
+timeouts:
+  pod_ready: 300
+  operator_init: 120
+  profile_install: 60
+  bulk_job_trigger: 180
+  webhook_callback: 120
+  
+# Optimizer configuration
+optimizer:
+  bulk_scheduler_interval: "2m"  # Faster for testing
+  bulk_scheduler_startup_delay: "30s"
+  measurement_duration: "15min"
+  target_labels:
+    kruize/autotune: "enabled"
+    
+# Test workload configuration
+workload:
+  name: "test-sysbench"
+  namespace: "default"
+  image: "quay.io/kruize/sysbench:latest"
+  
+# API endpoints
+api:
+  kruize_port: 8080
+  optimizer_port: 8081
+  
+# Logging
+logging:
+  level: INFO  # DEBUG, INFO, WARNING, ERROR
+  save_pod_logs: true
+  log_dir: "test_results"
+
+
