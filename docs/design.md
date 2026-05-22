@@ -70,7 +70,7 @@ graph TB
 
 - Users will directly interact with Kruize APIs or UI. 
 - Optimizer will interact with Kruize to create experiments and manage profiles. 
-- The UI will interact with Kruize to display and manage experiments/ recommendations.
+- The UI will interact with Kruize to display and manage experiments/recommendations.
 
 ## Core Components
 
