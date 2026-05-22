@@ -224,11 +224,6 @@ curl http://<route-url>/openapi
 
 > **Note**: Some browsers may download the OpenAPI specification as a file instead of rendering it inline. This is normal behavior and indicates the endpoint is working correctly.
 
-> **Additional Endpoints**: You can also verify the service using:
-> - `/kruize/status` - Get comprehensive system status
-> - `/q/metrics` - Prometheus metrics endpoint
-> - `/swagger-ui` - Interactive API documentation (if enabled with `ENABLE_SWAGGER=true`)
-
 For complete API documentation, see the [API Reference](optimizerAPI.md).
 
 ## Configuration
