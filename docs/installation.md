@@ -20,7 +20,7 @@ This guide provides detailed instructions for installing and deploying Kruize Op
 
 - **Java**: Java 25 or higher (for building Kruize Optimizer)
 - **Maven**: 3.6.0 or higher (for building from source)
-- **Docker**: 20.10 or higher (for containerized deployment)
+- **Container Runtime**: Docker 20.10+ or Docker-compatible runtimes (Podman, containerd, etc.) for containerized deployment
 - **Kubernetes**: 1.20+ or OpenShift 4.8+ (for cluster deployment)
 
 ### Required Tools
@@ -32,8 +32,12 @@ java -version
 # Verify Maven installation
 mvn -version
 
-# Verify Docker installation
+# Verify container runtime installation
+# For Docker:
 docker --version
+
+# For Podman (Docker-compatible alternative):
+podman --version
 
 # Verify kubectl installation (for Kubernetes)
 kubectl version --client
@@ -81,8 +85,12 @@ If you want to access the API from outside the cluster:
 # Port forward to access locally
 kubectl port-forward -n monitoring svc/kruize-optimizer 8080:8080
 
-# Access the API at http://localhost:8080
+# Verify the API is accessible by checking the OpenAPI specification
+curl http://localhost:8080/openapi
+# Or access it in your browser at http://localhost:8080/openapi
 ```
+
+> **Note**: Some browsers may download the OpenAPI specification as a file instead of rendering it inline. This is normal behavior and indicates the endpoint is working correctly.
 
 ### OpenShift Installation
 
@@ -114,7 +122,15 @@ oc expose svc/kruize-optimizer -n openshift-tuning
 oc get route kruize-optimizer -n openshift-tuning
 ```
 
-The route URL will be displayed, and you can access the API at that URL.
+The route URL will be displayed. Verify the API is accessible:
+
+```bash
+# Verify using the OpenAPI endpoint
+curl http://<route-url>/openapi
+# Or access it in your browser at http://<route-url>/openapi
+```
+
+> **Note**: Some browsers may download the OpenAPI specification as a file instead of rendering it inline. This is normal behavior and indicates the endpoint is working correctly.
 
 ### Local Development Setup
 
@@ -196,17 +212,22 @@ oc get svc kruize-optimizer -n openshift-tuning
 
 ### API Availability
 
-Once the service is running, verify API availability:
-
-> NOTE: Support for the /health endpoint is pending and will be implemented in the next version.
+Once the service is running, verify API availability using the OpenAPI endpoint:
 
 ```bash
 # If using port-forward or local development
-curl http://localhost:8080/health
+curl http://localhost:8080/openapi
 
 # If using OpenShift route
-curl http://<route-url>/health
+curl http://<route-url>/openapi
 ```
+
+> **Note**: Some browsers may download the OpenAPI specification as a file instead of rendering it inline. This is normal behavior and indicates the endpoint is working correctly.
+
+> **Additional Endpoints**: You can also verify the service using:
+> - `/kruize/status` - Get comprehensive system status
+> - `/q/metrics` - Prometheus metrics endpoint
+> - `/swagger-ui` - Interactive API documentation (if enabled with `ENABLE_SWAGGER=true`)
 
 For complete API documentation, see the [API Reference](optimizerAPI.md).
 
