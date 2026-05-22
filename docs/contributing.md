@@ -243,7 +243,7 @@ git rebase upstream/main
 ./mvnw clean verify
 ```
 
-4. **Update documentation** if needed
+3. **Update documentation** if needed
 
 ### PR Template
 
