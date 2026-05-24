@@ -90,7 +90,7 @@ curl http://localhost:8080/openapi
 # Or access it in your browser at http://localhost:8080/openapi
 ```
 
-> **Note**: Some browsers may download the OpenAPI specification as a file instead of rendering it inline. This is normal behavior and indicates the endpoint is working correctly.
+> **Note**: Some browsers may download the OpenAPI specification as a file instead of rendering it inline. This is normal behavior and indicates the endpoint is working correctly. We will add support for the health and readiness check endpoints in the upcoming release.
 
 ### OpenShift Installation
 
@@ -130,7 +130,7 @@ curl http://<route-url>/openapi
 # Or access it in your browser at http://<route-url>/openapi
 ```
 
-> **Note**: Some browsers may download the OpenAPI specification as a file instead of rendering it inline. This is normal behavior and indicates the endpoint is working correctly.
+> **Note**: Some browsers may download the OpenAPI specification as a file instead of rendering it inline. This is normal behavior and indicates the endpoint is working correctly. We will add support for the health and readiness check endpoints in the upcoming release.
 
 ### Local Development Setup
 
@@ -222,7 +222,7 @@ curl http://localhost:8080/openapi
 curl http://<route-url>/openapi
 ```
 
-> **Note**: Some browsers may download the OpenAPI specification as a file instead of rendering it inline. This is normal behavior and indicates the endpoint is working correctly.
+> **Note**: Some browsers may download the OpenAPI specification as a file instead of rendering it inline. This is normal behavior and indicates the endpoint is working correctly. We will add support for the health and readiness check endpoints in the upcoming release.
 
 For complete API documentation, see the [API Reference](optimizerAPI.md).
 
