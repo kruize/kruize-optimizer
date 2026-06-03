@@ -51,7 +51,7 @@ public class MetadataProfileResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response listMetadataProfiles() {
         try {
-            LOG.info("Fetching metadata profiles list");
+            LOG.info(MessageConstants.INFO_FETCHING_METADATA_PROFILES_LIST);
             List<KruizeProfile> profiles = profileService.getMetadataProfiles();
             
             if (profiles.isEmpty()) {
@@ -67,7 +67,7 @@ public class MetadataProfileResource {
             )).build();
             
         } catch (Exception e) {
-            LOG.error("Error fetching metadata profiles", e);
+            LOG.error(MessageConstants.ERROR_FETCHING_METADATA_PROFILES, e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity(ApiResponse.error(MessageConstants.ERROR_FETCHING_PROFILES))
                     .build();
@@ -85,7 +85,7 @@ public class MetadataProfileResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response installMetadataProfiles() {
         try {
-            LOG.info("Installing missing metadata profiles");
+            LOG.info(MessageConstants.INFO_INSTALLING_METADATA_PROFILES);
             List<String> results = profileService.installMissingProfiles(ProfileType.METADATA);
             
             return Response.ok(ApiResponse.success(
@@ -94,7 +94,7 @@ public class MetadataProfileResource {
             )).build();
             
         } catch (Exception e) {
-            LOG.error("Error installing metadata profiles", e);
+            LOG.error(MessageConstants.ERROR_INSTALLING_METADATA_PROFILES, e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity(ApiResponse.error(MessageConstants.ERROR_INSTALLING_PROFILES))
                     .build();

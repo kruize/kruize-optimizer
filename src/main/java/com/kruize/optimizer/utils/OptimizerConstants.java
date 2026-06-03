@@ -51,6 +51,11 @@ public final class OptimizerConstants {
         // bulk APIs
         public static final String BULK_ENDPOINT = "/bulk";
         public static final String JOB_ID = "job_id";
+
+        // APIs response 
+        public static final String KRUIZE_NO_METADATA_PROFILES_FOUND_ERROR = "No metadata profiles found!";
+        public static final String KRUIZE_NO_METRIC_PROFILES_FOUND_ERROR = "No metric profiles found!";
+        public static final String KRUIZE_NO_LAYERS_FOUND_ERROR = "No layers found!";
     }
 
     // contains constants for Optimizer Service API endpoints
@@ -120,6 +125,13 @@ public final class OptimizerConstants {
         public static final String ERROR_READING_PROFILE_FILE = "Error reading profile file";
         public static final String ERROR_INVALID_PROFILE_FORMAT = "Invalid profile format";
         public static final String KRUIZE_SERVICE_UNAVAILABLE = "Kruize service is unavailable";
+        public static final String ERROR_FAILED_TO_INSTALL_PROFILE = "Failed to install profile: %s";
+        public static final String ERROR_READING_CONFIGS_INDEX = "Error reading configsReferenceIndex.json";
+        public static final String ERROR_UNKNOWN_PROFILE_TYPE = "Unknown profile type: %s";
+        public static final String ERROR_FETCHING_METADATA_PROFILES = "Error fetching metadata profiles";
+        public static final String ERROR_FETCHING_METRIC_PROFILES = "Error fetching metric profiles";
+        public static final String ERROR_INSTALLING_METADATA_PROFILES = "Error installing metadata profiles";
+        public static final String ERROR_INSTALLING_METRIC_PROFILES = "Error installing metric profiles";
         public static final String ERROR_FETCHING_JOBS_OVERVIEW = "Error fetching jobs overview";
         public static final String ERROR_PROCESSING_WEBHOOK = "Error processing webhook";
         public static final String ERROR_PROCESSING_WEBHOOK_WITH_MESSAGE = "Error processing webhook: %s";
@@ -138,10 +150,27 @@ public final class OptimizerConstants {
         public static final String ERROR_FAILED_TO_EXECUTE_SCHEDULED_BULK_API_CALL = "Failed to execute scheduled bulk API call";
 
         // Info messages
+        public static final String PROFILE_INSTALLED_SUCCESS = "Successfully installed profile: %s";
+        public static final String PROFILE_INSTALL_RESULT_INSTALLED = "Installed: %s";
+        public static final String PROFILE_INSTALL_RESULT_ALREADY_INSTALLED = "Already installed: %s";
+        public static final String PROFILE_INSTALL_RESULT_FAILED = "Failed to install %s: %s";
+        public static final String PROFILE_INSTALL_RESULT_ERROR = "Error: %s";
         public static final String NO_DATASOURCES_FOUND = "No datasources found";
         public static final String NO_PROFILES_FOUND = "No profiles found";
         public static final String PROFILE_ALREADY_EXISTS = "Profile already exists";
-        public static final String PROFILE_NOT_FOUND = "Profile not found in local repository";
+        public static final String PROFILE_NOT_FOUND = "Profile not found in local repository: %s";
+        public static final String INFO_FETCHING_METADATA_PROFILES = "Fetching metadata profiles from Kruize";
+        public static final String INFO_FETCHING_METRIC_PROFILES = "Fetching metric profiles from Kruize";
+        public static final String INFO_FETCHING_LAYERS = "Fetching layers from Kruize";
+        public static final String INFO_NO_METADATA_PROFILES_FOUND = "No metadata profiles found in Kruize, returning empty list";
+        public static final String INFO_NO_METRIC_PROFILES_FOUND = "No metric profiles found in Kruize, returning empty list";
+        public static final String INFO_NO_LAYERS_FOUND = "No layers found in Kruize, returning empty list";
+        public static final String INFO_LOADING_PROFILE_FROM = "Loading profile from: %s";
+        public static final String WARN_CONFIGS_INDEX_NOT_FOUND = "configsReferenceIndex.json not found, returning empty list";
+        public static final String INFO_FETCHING_METADATA_PROFILES_LIST = "Fetching metadata profiles list";
+        public static final String INFO_FETCHING_METRIC_PROFILES_LIST = "Fetching metric profiles list";
+        public static final String INFO_INSTALLING_METADATA_PROFILES = "Installing missing metadata profiles";
+        public static final String INFO_INSTALLING_METRIC_PROFILES = "Installing missing metric profiles";
         public static final String INFO_FETCHING_JOBS_OVERVIEW = "Fetching jobs overview";
         public static final String INFO_INITIALIZING_BULK_SCHEDULER = "Initializing bulk scheduler...";
         public static final String INFO_BULK_SCHEDULER_INITIALIZED = "Bulk scheduler initialized successfully";
@@ -158,6 +187,7 @@ public final class OptimizerConstants {
         
         // Warning messages
         public static final String WARN_FAILED_TO_SERIALIZE_PAYLOAD = "Failed to serialize payload to JSON for logging";
+        public static final String WARN_FAILED_TO_READ_RESPONSE_BODY = "Failed to read response body";
         
         // Debug messages
         public static final String DEBUG_TOTAL_JOBS_TRIGGERED = "Total jobs triggered: %d";

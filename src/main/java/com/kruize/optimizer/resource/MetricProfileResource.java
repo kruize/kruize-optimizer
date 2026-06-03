@@ -51,7 +51,7 @@ public class MetricProfileResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response listMetricProfiles() {
         try {
-            LOG.info("Fetching metric profiles list");
+            LOG.info(MessageConstants.INFO_FETCHING_METRIC_PROFILES_LIST);
             List<KruizeProfile> profiles = profileService.getMetricProfiles();
             
             if (profiles.isEmpty()) {
@@ -67,7 +67,7 @@ public class MetricProfileResource {
             )).build();
             
         } catch (Exception e) {
-            LOG.error("Error fetching metric profiles", e);
+            LOG.error(MessageConstants.ERROR_FETCHING_METRIC_PROFILES, e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity(ApiResponse.error(MessageConstants.ERROR_FETCHING_PROFILES))
                     .build();
@@ -85,7 +85,7 @@ public class MetricProfileResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response installMetricProfiles() {
         try {
-            LOG.info("Installing missing metric profiles");
+            LOG.info(MessageConstants.INFO_INSTALLING_METRIC_PROFILES);
             List<String> results = profileService.installMissingProfiles(ProfileType.METRIC);
             
             return Response.ok(ApiResponse.success(
@@ -94,7 +94,7 @@ public class MetricProfileResource {
             )).build();
             
         } catch (Exception e) {
-            LOG.error("Error installing metric profiles", e);
+            LOG.error(MessageConstants.ERROR_INSTALLING_METRIC_PROFILES, e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity(ApiResponse.error(MessageConstants.ERROR_INSTALLING_PROFILES))
                     .build();

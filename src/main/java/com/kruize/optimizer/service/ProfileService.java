@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kruize.optimizer.client.KruizeClient;
 import com.kruize.optimizer.exception.KruizeServiceException;
 import com.kruize.optimizer.model.kruize.KruizeProfile;
+import com.kruize.optimizer.utils.OptimizerConstants.KruizeClientConstants;
 import com.kruize.optimizer.utils.OptimizerConstants.MessageConstants;
 import com.kruize.optimizer.utils.OptimizerConstants.ProfileType;
 import com.kruize.optimizer.utils.OptimizerConstants.ProfilePathConstants;
@@ -57,7 +58,7 @@ public class ProfileService {
      */
     public List<KruizeProfile> getMetadataProfiles() {
         try {
-            LOG.info("Fetching metadata profiles from Kruize");
+            LOG.info(MessageConstants.INFO_FETCHING_METADATA_PROFILES);
             // Always use verbose=true to get profile_version in response
             List<KruizeProfile> profiles = Optional.ofNullable(kruizeClient.getMetadataProfiles(true))
                     .orElse(Collections.emptyList());
@@ -70,12 +71,12 @@ public class ProfileService {
             if (e.getResponse().getStatus() == 400) {
                 try {
                     String responseBody = e.getResponse().readEntity(String.class);
-                    if (responseBody != null && responseBody.contains("No metadata profiles found!")) {
-                        LOG.info("No metadata profiles found in Kruize, returning empty list");
+                    if (responseBody != null && responseBody.contains(KruizeClientConstants.KRUIZE_NO_METADATA_PROFILES_FOUND_ERROR)) {
+                        LOG.info(MessageConstants.INFO_NO_METADATA_PROFILES_FOUND);
                         return Collections.emptyList();
                     }
                 } catch (Exception ex) {
-                    LOG.warn("Failed to read response body", ex);
+                    LOG.warn(MessageConstants.WARN_FAILED_TO_READ_RESPONSE_BODY, ex);
                 }
             }
             LOG.error(MessageConstants.KRUIZE_SERVICE_UNAVAILABLE, e);
@@ -102,7 +103,7 @@ public class ProfileService {
      */
     public List<KruizeProfile> getMetricProfiles() {
         try {
-            LOG.info("Fetching metric profiles from Kruize");
+            LOG.info(MessageConstants.INFO_FETCHING_METRIC_PROFILES);
             // Always use verbose=true to get profile_version in response
             List<KruizeProfile> profiles = Optional.ofNullable(kruizeClient.getMetricProfiles(true))
                     .orElse(Collections.emptyList());
@@ -115,12 +116,12 @@ public class ProfileService {
             if (e.getResponse().getStatus() == 400) {
                 try {
                     String responseBody = e.getResponse().readEntity(String.class);
-                    if (responseBody != null && responseBody.contains("No metric profiles found!")) {
-                        LOG.info("No metric profiles found in Kruize, returning empty list");
+                    if (responseBody != null && responseBody.contains(KruizeClientConstants.KRUIZE_NO_METRIC_PROFILES_FOUND_ERROR)) {
+                        LOG.info(MessageConstants.INFO_NO_METRIC_PROFILES_FOUND);
                         return Collections.emptyList();
                     }
                 } catch (Exception ex) {
-                    LOG.warn("Failed to read response body", ex);
+                    LOG.warn(MessageConstants.WARN_FAILED_TO_READ_RESPONSE_BODY, ex);
                 }
             }
             LOG.error(MessageConstants.KRUIZE_SERVICE_UNAVAILABLE, e);
@@ -146,7 +147,7 @@ public class ProfileService {
      */
     public List<KruizeProfile> getLayers() {
         try {
-            LOG.info("Fetching layers from Kruize");
+            LOG.info(MessageConstants.INFO_FETCHING_LAYERS);
             List<KruizeProfile> layers = Optional.ofNullable(kruizeClient.getLayers())
                     .orElse(Collections.emptyList());
             // Set profile type for each layer
@@ -158,12 +159,12 @@ public class ProfileService {
             if (e.getResponse().getStatus() == 400) {
                 try {
                     String responseBody = e.getResponse().readEntity(String.class);
-                    if (responseBody != null && responseBody.contains("No layers found!")) {
-                        LOG.info("No layers found in Kruize, returning empty list");
+                    if (responseBody != null && responseBody.contains(KruizeClientConstants.KRUIZE_NO_LAYERS_FOUND_ERROR)) {
+                        LOG.info(MessageConstants.INFO_NO_LAYERS_FOUND);
                         return Collections.emptyList();
                     }
                 } catch (Exception ex) {
-                    LOG.warn("Failed to read response body", ex);
+                    LOG.warn(MessageConstants.WARN_FAILED_TO_READ_RESPONSE_BODY, ex);
                 }
             }
             LOG.error(MessageConstants.KRUIZE_SERVICE_UNAVAILABLE, e);
@@ -209,21 +210,21 @@ public class ProfileService {
                 if (!installedNames.contains(profileName)) {
                     try {
                         installProfile(profileType, profileName, profileVersion);
-                        results.add("Installed: " + profileName);
-                        LOG.info("Successfully installed profile: " + profileName);
+                        results.add(String.format(MessageConstants.PROFILE_INSTALL_RESULT_INSTALLED, profileName));
+                        LOG.info(String.format(MessageConstants.PROFILE_INSTALLED_SUCCESS, profileName));
                     } catch (Exception e) {
-                        String error = "Failed to install " + profileName + ": " + e.getMessage();
+                        String error = String.format(MessageConstants.PROFILE_INSTALL_RESULT_FAILED, profileName, e.getMessage());
                         results.add(error);
                         LOG.error(error, e);
                     }
                 } else {
-                    results.add("Already installed: " + profileName);
+                    results.add(String.format(MessageConstants.PROFILE_INSTALL_RESULT_ALREADY_INSTALLED, profileName));
                 }
             }
 
         } catch (Exception e) {
             LOG.error(MessageConstants.ERROR_INSTALLING_PROFILES, e);
-            results.add("Error: " + e.getMessage());
+            results.add(String.format(MessageConstants.PROFILE_INSTALL_RESULT_ERROR, e.getMessage()));
         }
 
         return results;
@@ -251,10 +252,10 @@ public class ProfileService {
                     kruizeClient.createLayer(profileDefinition);
                     break;
                 default:
-                    throw new IllegalArgumentException("Unknown profile type: " + profileType);
+                    throw new IllegalArgumentException(String.format(MessageConstants.ERROR_UNKNOWN_PROFILE_TYPE, profileType));
             }
         } catch (Exception e) {
-            throw new RuntimeException("Failed to install profile: " + profileName, e);
+            throw new RuntimeException(String.format(MessageConstants.ERROR_FAILED_TO_INSTALL_PROFILE, profileName), e);
         }
     }
 
@@ -269,16 +270,16 @@ public class ProfileService {
     private Object loadProfileFromLocal(String profileType, String profileName, String profileVersion) {
         try {
             String resourcePath = getResourcePath(profileType, profileName, profileVersion);
-            LOG.info("Loading profile from: " + resourcePath);
+            LOG.info(String.format(MessageConstants.INFO_LOADING_PROFILE_FROM, resourcePath));
             
             try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream(resourcePath)) {
                 if (inputStream == null) {
-                    throw new RuntimeException(MessageConstants.PROFILE_NOT_FOUND + ": " + resourcePath);
+                    throw new RuntimeException(String.format(MessageConstants.PROFILE_NOT_FOUND, resourcePath));
                 }
                 return objectMapper.readValue(inputStream, Object.class);
             }
         } catch (Exception e) {
-            throw new RuntimeException(MessageConstants.ERROR_READING_PROFILE_FILE + ": " + profileName, e);
+            throw new RuntimeException(String.format(MessageConstants.ERROR_READING_PROFILE_FILE, profileName), e);
         }
     }
 
@@ -304,7 +305,7 @@ public class ProfileService {
                 return ProfilePathConstants.LAYERS_DIR + profileName +
                        ProfilePathConstants.JSON_EXTENSION;
             default:
-                throw new IllegalArgumentException("Unknown profile type: " + profileType);
+                throw new IllegalArgumentException(String.format(MessageConstants.ERROR_UNKNOWN_PROFILE_TYPE, profileType));
         }
     }
 
@@ -321,7 +322,7 @@ public class ProfileService {
             try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream(
                     ProfilePathConstants.CONFIGS_INDEX_FILE)) {
                 if (inputStream == null) {
-                    LOG.warn("configsReferenceIndex.json not found, returning empty list");
+                    LOG.warn(MessageConstants.WARN_CONFIGS_INDEX_NOT_FOUND);
                     return profiles;
                 }
                 
@@ -359,11 +360,11 @@ public class ProfileService {
                         }
                         break;
                     default:
-                        throw new IllegalArgumentException("Unknown profile type: " + profileType);
+                        throw new IllegalArgumentException(String.format(MessageConstants.ERROR_UNKNOWN_PROFILE_TYPE, profileType));
                 }
             }
         } catch (Exception e) {
-            LOG.error("Error reading configsReferenceIndex.json", e);
+            LOG.error(MessageConstants.ERROR_READING_CONFIGS_INDEX, e);
         }
         
         return profiles;
@@ -384,7 +385,7 @@ public class ProfileService {
             case ProfileType.LAYER:
                 return getLayers();
             default:
-                throw new IllegalArgumentException("Unknown profile type: " + profileType);
+                throw new IllegalArgumentException(String.format(MessageConstants.ERROR_UNKNOWN_PROFILE_TYPE, profileType));
         }
     }
 }
