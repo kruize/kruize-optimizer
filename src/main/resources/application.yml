@@ -30,12 +30,17 @@ kruize:
       # Interval to refresh state and install missing profiles
       interval: ${KRUIZE_STATE_REFRESH_INTERVAL:60m}
   bulk:
+    profile:
+      # Enable/disable profile-based scheduling
+      # When true: Uses bulk profiles from Kruize with individual timers
+      # When false: Uses legacy fixed-schedule mode
+      enabled: ${KRUIZE_BULK_PROFILE_ENABLED:true}
     scheduler:
-      # Interval to call bulk API (cron format or duration)
+      # Interval to call bulk API (used only when profile.enabled=false)
       interval: ${KRUIZE_BULK_SCHEDULER_INTERVAL:15m}
       # Startup delay before first bulk API call
       startup-delay: ${KRUIZE_BULK_SCHEDULER_STARTUP_DELAY:1m}
-      # Measurement duration for bulk API calls
+      # Measurement duration for bulk API calls (used only when profile.enabled=false)
       measurement-duration: ${KRUIZE_BULK_MEASUREMENT_DURATION:15min}
   webhook:
     # Webhook URL for bulk API callbacks

@@ -80,4 +80,14 @@ public interface KruizeClient {
     @Path(OptimizerConstants.KruizeClientConstants.BULK_ENDPOINT)
     @Produces(MediaType.APPLICATION_JSON)
     String getBulkJobStatus(@QueryParam(OptimizerConstants.KruizeClientConstants.JOB_ID) String jobId);
+
+    @GET
+    @Path(OptimizerConstants.KruizeClientConstants.BULK_PROFILES_ENDPOINT)
+    @Produces(MediaType.APPLICATION_JSON)
+    String getBulkProfiles();
+
+    @GET
+    @Path(OptimizerConstants.KruizeClientConstants.BULK_PROFILES_ENDPOINT)
+    @Produces(MediaType.APPLICATION_JSON)
+    String getBulkProfile(@QueryParam(OptimizerConstants.KruizeClientConstants.PROFILE_NAME) String profileName);
 }

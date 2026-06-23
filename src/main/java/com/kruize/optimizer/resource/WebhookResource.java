@@ -16,6 +16,7 @@
 package com.kruize.optimizer.resource;
 
 import com.kruize.optimizer.model.WebhookPayload;
+import com.kruize.optimizer.model.kruize.BulkProfile;
 import com.kruize.optimizer.service.BulkSchedulerService;
 import com.kruize.optimizer.utils.OptimizerConstants.MessageConstants;
 import com.kruize.optimizer.utils.OptimizerConstants.OptimizerApiConstants;
@@ -85,6 +86,39 @@ public class WebhookResource {
         } catch (Exception e) {
             LOG.error(MessageConstants.ERROR_PROCESSING_WEBHOOK, e);
             return Response.serverError().entity(String.format(MessageConstants.ERROR_PROCESSING_WEBHOOK_WITH_MESSAGE, e.getMessage())).build();
+        }
+    }
+
+    /**
+     * Receive profile update webhook from Kruize
+     *
+     * @param profile Updated bulk profile
+     * @return HTTP response
+     */
+    @POST
+    @Path("/profile-update")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response receiveProfileUpdate(BulkProfile profile) {
+        LOG.infof("Received profile update webhook for: %s",
+            profile != null ? profile.getProfileName() : "null");
+        
+        // Validate profile
+        if (profile == null || profile.getProfileName() == null || profile.getProfileName().trim().isEmpty()) {
+            LOG.error("Invalid profile update: profile or profile name is null/empty");
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity("Invalid profile update: profile name is required")
+                    .build();
+        }
+        
+        try {
+            bulkSchedulerService.handleProfileUpdate(profile);
+            return Response.ok().build();
+        } catch (Exception e) {
+            LOG.error("Error processing profile update webhook", e);
+            return Response.serverError()
+                    .entity("Error processing profile update: " + e.getMessage())
+                    .build();
         }
     }
 }

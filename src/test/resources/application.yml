@@ -27,6 +27,10 @@ kruize:
       interval: 5m
       measurement-duration: 15m
       startup-delay: 1m
+    
+    # Profile-based scheduling (disabled for legacy tests)
+    profile:
+      enabled: false
   
   # Webhook configuration
   webhook:

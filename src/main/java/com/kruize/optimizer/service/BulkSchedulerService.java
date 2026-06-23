@@ -18,6 +18,7 @@ package com.kruize.optimizer.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kruize.optimizer.client.KruizeClient;
 import com.kruize.optimizer.model.WebhookPayload;
+import com.kruize.optimizer.model.kruize.BulkProfile;
 import com.kruize.optimizer.utils.OptimizerConstants.MessageConstants;
 import com.kruize.optimizer.utils.OptimizerConstants.BulkSchedulerConstants;
 import com.kruize.optimizer.utils.OptimizerConstants.WebhookConstants;
@@ -52,6 +53,12 @@ public class BulkSchedulerService {
     @Inject
     ObjectMapper objectMapper;
 
+    @Inject
+    ProfileTimerManager profileTimerManager;
+
+    @ConfigProperty(name = "kruize.bulk.profile.enabled", defaultValue = "true")
+    boolean profileBasedSchedulingEnabled;
+
     @ConfigProperty(name = "kruize.bulk.scheduler.measurement-duration")
     String measurementDuration;
 
@@ -77,6 +84,14 @@ public class BulkSchedulerService {
             // Use common function to refresh state and install missing profiles
             kruizeStateService.refreshStateAndInstallProfiles();
             
+            if (profileBasedSchedulingEnabled) {
+                // NEW: Initialize profile-based timers
+                LOG.info("Profile-based scheduling is enabled, initializing profile timers...");
+                profileTimerManager.initializeProfiles();
+            } else {
+                LOG.info("Profile-based scheduling is disabled, using legacy fixed-schedule mode");
+            }
+            
             initialized = true;
             LOG.info(MessageConstants.INFO_BULK_SCHEDULER_INITIALIZED);
         } catch (Exception e) {
@@ -96,6 +111,13 @@ public class BulkSchedulerService {
             return;
         }
 
+        if (profileBasedSchedulingEnabled) {
+            // Skip if profile-based scheduling is enabled
+            // Profiles are managed by ProfileTimerManager
+            return;
+        }
+
+        // Legacy fixed-schedule mode
         LOG.infof(MessageConstants.INFO_STARTING_SCHEDULED_BULK_API_CALL, targetLabelsJson);
 
         try {
@@ -264,6 +286,21 @@ public class BulkSchedulerService {
                     LOG.infof(MessageConstants.INFO_JOB_STATUS, jobId, status);
                 }
             }
+        }
+    }
+
+    /**
+     * Handle profile update webhook from Kruize
+     *
+     * @param updatedProfile Updated bulk profile
+     */
+    public void handleProfileUpdate(BulkProfile updatedProfile) {
+        LOG.infof("Received profile update for: %s", updatedProfile.getProfileName());
+        
+        if (profileBasedSchedulingEnabled) {
+            profileTimerManager.updateProfileTimer(updatedProfile);
+        } else {
+            LOG.warn("Profile-based scheduling is disabled, ignoring profile update");
         }
     }
 }

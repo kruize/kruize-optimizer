@@ -51,6 +51,10 @@ public final class OptimizerConstants {
         // bulk APIs
         public static final String BULK_ENDPOINT = "/bulk";
         public static final String JOB_ID = "job_id";
+        
+        // bulk profile APIs
+        public static final String BULK_PROFILES_ENDPOINT = "/bulkProfiles";
+        public static final String PROFILE_NAME = "profile_name";
     }
 
     // contains constants for Optimizer Service API endpoints
