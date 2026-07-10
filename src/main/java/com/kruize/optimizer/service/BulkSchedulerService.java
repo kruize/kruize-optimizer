@@ -18,6 +18,7 @@ package com.kruize.optimizer.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kruize.optimizer.client.KruizeClient;
 import com.kruize.optimizer.model.WebhookPayload;
+import com.kruize.optimizer.model.kruize.BulkConfig;
 import com.kruize.optimizer.utils.OptimizerConstants.MessageConstants;
 import com.kruize.optimizer.utils.OptimizerConstants.BulkSchedulerConstants;
 import com.kruize.optimizer.utils.OptimizerConstants.WebhookConstants;
@@ -52,6 +53,12 @@ public class BulkSchedulerService {
     @Inject
     ObjectMapper objectMapper;
 
+    @Inject
+    ConfigTimerManager configTimerManager;
+
+    @ConfigProperty(name = "kruize.bulk.config.enabled", defaultValue = "true")
+    boolean configBasedSchedulingEnabled;
+
     @ConfigProperty(name = "kruize.bulk.scheduler.measurement-duration")
     String measurementDuration;
 
@@ -76,6 +83,14 @@ public class BulkSchedulerService {
             
             // Use common function to refresh state and install missing profiles
             kruizeStateService.refreshStateAndInstallProfiles();
+
+            if (configBasedSchedulingEnabled) {
+                // NEW: Initialize config-based timers
+                LOG.info("Config-based scheduling is enabled, initializing config timers...");
+                configTimerManager.initializeConfigs();
+            } else {
+                LOG.info("Config-based scheduling is disabled, using legacy fixed-schedule mode");
+            }
             
             initialized = true;
             LOG.info(MessageConstants.INFO_BULK_SCHEDULER_INITIALIZED);
@@ -93,6 +108,12 @@ public class BulkSchedulerService {
     public void scheduledBulkApiCall() {
         if (!initialized) {
             LOG.debug(MessageConstants.INFO_BULK_SCHEDULER_NOT_INITIALIZED);
+            return;
+        }
+
+        if (configBasedSchedulingEnabled) {
+            // Skip if config-based scheduling is enabled
+            // Configs are managed by ConfigTimerManager
             return;
         }
 
@@ -264,6 +285,21 @@ public class BulkSchedulerService {
                     LOG.infof(MessageConstants.INFO_JOB_STATUS, jobId, status);
                 }
             }
+        }
+    }
+
+    /**
+     * Handle config update webhook from Kruize
+     *
+     * @param updatedConfig Updated bulk config
+     */
+    public void handleConfigUpdate(BulkConfig updatedConfig) {
+        LOG.infof("Received config update for: %s", updatedConfig.getConfigName());
+
+        if (configBasedSchedulingEnabled) {
+            configTimerManager.updateConfigTimer(updatedConfig);
+        } else {
+            LOG.warn("Config-based scheduling is disabled, ignoring config update");
         }
     }
 }

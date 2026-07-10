@@ -15,9 +15,11 @@
  *******************************************************************************/
 package com.kruize.optimizer.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kruize.optimizer.client.KruizeClient;
 import com.kruize.optimizer.exception.KruizeServiceException;
+import com.kruize.optimizer.model.kruize.BulkConfig;
 import com.kruize.optimizer.model.kruize.KruizeProfile;
 import com.kruize.optimizer.utils.OptimizerConstants.MessageConstants;
 import com.kruize.optimizer.utils.OptimizerConstants.ProfileType;
@@ -183,6 +185,62 @@ public class ProfileService {
     }
 
     /**
+     * Get bulk configs from Kruize
+     *
+     * @return List of bulk configs
+     */
+    public List<KruizeProfile> getBulkConfigs() {
+        try {
+            LOG.info("Fetching bulk configs from Kruize");
+            String response = kruizeClient.getBulkConfigs();
+            List<BulkConfig> bulkConfigs = objectMapper.readValue(
+                    response,
+                    new TypeReference<List<BulkConfig>>() {}
+            );
+            
+            // Convert BulkConfig to KruizeProfile
+            List<KruizeProfile> profiles = bulkConfigs.stream()
+                    .map(bc -> {
+                        KruizeProfile kp = new KruizeProfile();
+                        kp.setName(bc.getConfigName());
+                        kp.setProfileType(ProfileType.BULK);
+                        // Note: BulkConfig doesn't have profile_version field in the response
+                        return kp;
+                    })
+                    .collect(Collectors.toList());
+            
+            return profiles;
+            
+        } catch (ClientWebApplicationException e) {
+            // Check if this is a "No bulk configs found" error (400 status)
+            if (e.getResponse().getStatus() == 400) {
+                try {
+                    String responseBody = e.getResponse().readEntity(String.class);
+                    if (responseBody != null && responseBody.contains("No bulk configs found")) {
+                        LOG.info("No bulk configs found in Kruize, returning empty list");
+                        return Collections.emptyList();
+                    }
+                } catch (Exception ex) {
+                    LOG.warn("Failed to read response body", ex);
+                }
+            }
+            LOG.error(MessageConstants.KRUIZE_SERVICE_UNAVAILABLE, e);
+            throw new KruizeServiceException(
+                    MessageConstants.KRUIZE_SERVICE_UNAVAILABLE,
+                    e,
+                    Response.Status.SERVICE_UNAVAILABLE.getStatusCode()
+            );
+        } catch (Exception e) {
+            LOG.error(MessageConstants.KRUIZE_SERVICE_UNAVAILABLE, e);
+            throw new KruizeServiceException(
+                    MessageConstants.KRUIZE_SERVICE_UNAVAILABLE,
+                    e,
+                    Response.Status.SERVICE_UNAVAILABLE.getStatusCode()
+            );
+        }
+    }
+
+    /**
      * Install missing profiles from local repository
      *
      * @param profileType type of profile (metadata, metric, layer)
@@ -250,9 +308,19 @@ public class ProfileService {
                 case ProfileType.LAYER:
                     kruizeClient.createLayer(profileDefinition);
                     break;
+                case ProfileType.BULK:
+                    kruizeClient.createBulkConfig(profileDefinition);
+                    break;
                 default:
                     throw new IllegalArgumentException("Unknown profile type: " + profileType);
             }
+        } catch (ClientWebApplicationException e) {
+            // Handle 409 Conflict - profile already exists
+            if (e.getResponse().getStatus() == 409) {
+                LOG.debugf("Profile %s already exists (409 Conflict), skipping installation", profileName);
+                return; // Treat as success - profile already exists
+            }
+            throw new RuntimeException("Failed to install profile: " + profileName, e);
         } catch (Exception e) {
             throw new RuntimeException("Failed to install profile: " + profileName, e);
         }
@@ -303,6 +371,11 @@ public class ProfileService {
             case ProfileType.LAYER:
                 return ProfilePathConstants.LAYERS_DIR + profileName +
                        ProfilePathConstants.JSON_EXTENSION;
+            case ProfileType.BULK:
+                return ProfilePathConstants.CONFIGS_BASE_PATH + profileVersion +
+                        ProfilePathConstants.BULK_CONFIGS_DIR + profileName +
+                        ProfilePathConstants.JSON_EXTENSION;
+
             default:
                 throw new IllegalArgumentException("Unknown profile type: " + profileType);
         }
@@ -358,6 +431,16 @@ public class ProfileService {
                             }
                         }
                         break;
+                    case ProfileType.BULK:
+                        profilesNode = rootNode.get(ProfilePathConstants.BULK_CONFIGS_KEY);
+                        if (profilesNode != null && profilesNode.isArray()) {
+                            for (JsonNode profileNode : profilesNode) {
+                                String name = profileNode.get("name").asText();
+                                String version = profileNode.get("profile_version").asText();
+                                profiles.put(name, version);
+                            }
+                        }
+                        break;
                     default:
                         throw new IllegalArgumentException("Unknown profile type: " + profileType);
                 }
@@ -383,6 +466,8 @@ public class ProfileService {
                 return getMetricProfiles();
             case ProfileType.LAYER:
                 return getLayers();
+            case ProfileType.BULK:
+                return getBulkConfigs();
             default:
                 throw new IllegalArgumentException("Unknown profile type: " + profileType);
         }

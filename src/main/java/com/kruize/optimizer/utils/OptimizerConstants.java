@@ -51,6 +51,10 @@ public final class OptimizerConstants {
         // bulk APIs
         public static final String BULK_ENDPOINT = "/bulk";
         public static final String JOB_ID = "job_id";
+
+        // bulk config APIs
+        public static final String BULK_CONFIGS_ENDPOINT = "/bulkConfigs";
+        public static final String CONFIG_NAME = "config_name";
     }
 
     // contains constants for Optimizer Service API endpoints
@@ -225,6 +229,7 @@ public final class OptimizerConstants {
         public static final String METADATA = "metadata";
         public static final String METRIC = "metric";
         public static final String LAYER = "layer";
+        public static final String BULK = "bulk_config";
     }
 
     // contains profile path constants
@@ -238,12 +243,14 @@ public final class OptimizerConstants {
         public static final String CONFIGS_INDEX_FILE = "configs/configsReferenceIndex.json";
         public static final String METADATA_PROFILES_DIR = "/metadata-profiles/";
         public static final String METRIC_PROFILES_DIR = "/metric-profiles/";
+        public static final String BULK_CONFIGS_DIR = "/bulk-configs/";
         public static final String LAYERS_DIR = "configs/layers/";
         public static final String JSON_EXTENSION = ".json";
         
         // JSON field names in configsReferenceIndex.json
         public static final String METADATA_PROFILES_KEY = "metadata_profiles";
         public static final String METRIC_PROFILES_KEY = "metric_profiles";
+        public static final String BULK_CONFIGS_KEY = "bulk_configs";
         public static final String LAYERS_KEY = "layers";
         public static final String NAME_KEY = "name";
         public static final String PROFILE_VERSION_KEY = "profile_version";

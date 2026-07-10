@@ -27,6 +27,9 @@ kruize:
       interval: 5m
       measurement-duration: 15m
       startup-delay: 1m
+    # Config-based scheduling (disabled for legacy tests)
+    config:
+      enabled: false
   
   # Webhook configuration
   webhook:
