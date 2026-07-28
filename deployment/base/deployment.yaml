@@ -65,6 +65,16 @@ spec:
               value: '{"kruize/autotune": "enabled"}'
             
             # Default Configuration
+            # Default datasource name
+            - name: KRUIZE_DEFAULT_DATASOURCE
+              value: "prometheus-1"
+            
+            # Datasources (comma-separated list for multi-datasource support)
+            # Takes precedence over single datasource config
+            # Example: "prometheus-1,prometheus-2"
+            - name: KRUIZE_DATASOURCES
+              value: "prometheus-1, thanos-1"
+            
             # Default metadata profile name
             - name: KRUIZE_DEFAULT_METADATA_PROFILE
               value: "cluster-metadata-local-monitoring"

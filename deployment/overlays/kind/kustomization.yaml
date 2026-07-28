@@ -18,7 +18,12 @@ patches:
             containers:
               - name: kruize-optimizer
                 env:
+                  # Deprecated - use KRUIZE_DEFAULT_DATASOURCES for multi-datasource support
                   - name: KRUIZE_DEFAULT_DATASOURCE
+                    value: "prometheus-1"
+                  # New - comma-separated list of datasources (takes precedence over single datasource)
+                  # Example: "prometheus-1,prometheus-2"
+                  - name: KRUIZE_DEFAULT_DATASOURCES
                     value: "prometheus-1"
     target:
       kind: Deployment

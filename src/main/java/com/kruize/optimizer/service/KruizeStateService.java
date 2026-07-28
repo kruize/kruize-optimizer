@@ -44,7 +44,10 @@ public class KruizeStateService {
     ProfileService profileService;
 
     @ConfigProperty(name = "kruize.defaults.datasource")
-    String defaultDatasource;
+    String defaultDatasource; // Deprecated - kept for backward compatibility
+    
+    @ConfigProperty(name = "kruize.defaults.datasources")
+    Optional<String> defaultDatasources; // New - comma-separated list of datasource names
 
     @ConfigProperty(name = "kruize.defaults.metadata-profile")
     String defaultMetadataProfile;
@@ -145,25 +148,51 @@ public class KruizeStateService {
     }
 
     /**
-     * Get the default datasource name (falls back to first available if default not found)
+     * Get the default datasource names as a list
+     * Supports both new comma-separated format and old single datasource format
+     * The old single datasource format takes precedence for backward compatibility
      *
-     * @return Optional datasource name
+     * @return List of datasource names, never null
      */
-    public Optional<String> getDefaultDatasourceName() {
-        // Try to find the default datasource first
-        Optional<String> defaultDs = cachedDatasources.stream()
-                .filter(ds -> defaultDatasource.equals(ds.getName()))
-                .map(Datasource::getName)
-                .findFirst();
+    public List<String> getDefaultDatasourceNames() {
+        List<String> result = new ArrayList<>();
         
-        if (defaultDs.isPresent()) {
-            return defaultDs;
+        // First, check the old single datasource config (takes precedence for backward compatibility)
+        if (defaultDatasource != null && !defaultDatasource.trim().isEmpty()) {
+            result.add(defaultDatasource);
+            LOG.debugf("Added datasource from legacy config (takes precedence): %s", defaultDatasource);
+        }
+        // If old config is not set, use the new comma-separated datasources config
+        else if (defaultDatasources.isPresent() && !defaultDatasources.get().trim().isEmpty()) {
+            String[] names = defaultDatasources.get().split(",");
+            for (String name : names) {
+                String trimmedName = name.trim();
+                if (!trimmedName.isEmpty()) {
+                    result.add(trimmedName);
+                    LOG.debugf("Added datasource from config: %s", trimmedName);
+                }
+            }
         }
         
-        // Fall back to first available
-        return cachedDatasources.stream()
-                .findFirst()
-                .map(Datasource::getName);
+        // If still empty, use first available datasource
+        if (result.isEmpty() && !cachedDatasources.isEmpty()) {
+            result.add(cachedDatasources.get(0).getName());
+        }
+        
+        LOG.debugf("Returning %d datasource(s): %s", result.size(), result);
+        return result;
+    }
+
+    /**
+     * Get the default datasource name (falls back to first available if default not found)
+     *
+     * @deprecated Use {@link #getDefaultDatasourceNames()} instead for multi-datasource support
+     * @return Optional datasource name
+     */
+    @Deprecated
+    public Optional<String> getDefaultDatasourceName() {
+        List<String> names = getDefaultDatasourceNames();
+        return names.isEmpty() ? Optional.empty() : Optional.of(names.get(0));
     }
 
     /**

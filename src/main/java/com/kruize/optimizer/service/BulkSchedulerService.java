@@ -112,10 +112,10 @@ public class BulkSchedulerService {
                 kruizeStateService.refreshState();
             }
 
-            // Get datasource from global state
-            Optional<String> datasourceName = kruizeStateService.getDefaultDatasourceName();
-            if (!datasourceName.isPresent()) {
-                LOG.error(MessageConstants.ERROR_NO_DATASOURCE_AVAILABLE);
+            // Get datasources from global state
+            List<String> datasourceNames = kruizeStateService.getDefaultDatasourceNames();
+            if (datasourceNames.isEmpty()) {
+                LOG.error(MessageConstants.ERROR_NO_DATASOURCES_AVAILABLE);
                 return;
             }
 
@@ -136,7 +136,7 @@ public class BulkSchedulerService {
             // Construct the bulk API payload
             Map<String, Object> payload = buildBulkPayload(
                     targetLabels,
-                    datasourceName.get(),
+                    datasourceNames,
                     metadataProfileName.get(),
                     metricProfileName.get()
             );
@@ -193,13 +193,13 @@ public class BulkSchedulerService {
      * Builds the payload for the bulk API call.
      *
      * @param targetLabels       The target labels to filter workloads
-     * @param datasource         The datasource name
+     * @param datasources        The list of datasource names
      * @param metadataProfile    The metadata profile name
      * @param metricProfile      The metric profile name
      * @return The bulk API payload as a Map
      */
     private Map<String, Object> buildBulkPayload(Map<String, String> targetLabels,
-                                                   String datasource, String metadataProfile, String metricProfile) {
+                                                   List<String> datasources, String metadataProfile, String metricProfile) {
         Map<String, Object> payload = new HashMap<>();
 
         // Create filter with the target labels
@@ -212,8 +212,16 @@ public class BulkSchedulerService {
         filter.put(BulkSchedulerConstants.INCLUDE, include);
         payload.put(BulkSchedulerConstants.FILTER, filter);
 
-        // Add datasource from global state
-        payload.put(BulkSchedulerConstants.DATASOURCE, datasource);
+        // Add datasources based on availability:
+        // - If list is present, use the new 'datasources' field (supports multiple datasources)
+        // - If list is absent/empty, fall back to deprecated 'datasource' field (single datasource)
+        if (!datasources.isEmpty()) {
+            payload.put(BulkSchedulerConstants.DATASOURCES, datasources);
+        } else {
+            // This case should not occur as we check for empty datasources earlier,
+            // but kept for completeness
+            payload.put(BulkSchedulerConstants.DATASOURCE, null);
+        }
 
         // Add metadata profile from global state
         payload.put(BulkSchedulerConstants.METADATA_PROFILE, metadataProfile);

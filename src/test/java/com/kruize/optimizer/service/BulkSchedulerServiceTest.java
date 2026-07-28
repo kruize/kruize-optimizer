@@ -17,6 +17,7 @@ package com.kruize.optimizer.service;
 
 import com.kruize.optimizer.client.KruizeClient;
 import com.kruize.optimizer.util.MockResponseLoader;
+import com.kruize.optimizer.utils.OptimizerConstants.BulkSchedulerConstants;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
@@ -28,6 +29,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -95,7 +98,7 @@ class BulkSchedulerServiceTest {
     void testScheduledBulkApiCall_Success() {
         // Arrange
         when(kruizeStateService.isCacheEmpty()).thenReturn(false);
-        when(kruizeStateService.getDefaultDatasourceName()).thenReturn(Optional.of("prometheus-1"));
+        when(kruizeStateService.getDefaultDatasourceNames()).thenReturn(List.of("prometheus-1"));
         when(kruizeStateService.getDefaultMetadataProfileName()).thenReturn(Optional.of("cluster-metadata-local-monitoring"));
         when(kruizeStateService.getDefaultMetricProfileName()).thenReturn(Optional.of("resource-optimization-local-monitoring"));
         when(kruizeClient.bulkCreateExperiments(any())).thenReturn(mockBulkApiResponse);
@@ -115,13 +118,61 @@ class BulkSchedulerServiceTest {
         Map<String, Object> payload = payloadCaptor.getValue();
 
         assertNotNull(payload);
-        assertTrue(payload.containsKey("filter"));
-        assertTrue(payload.containsKey("datasource"));
-        assertTrue(payload.containsKey("metadata_profile"));
-        assertTrue(payload.containsKey("measurement_duration"));
-        assertEquals("prometheus-1", payload.get("datasource"));
-        assertEquals("cluster-metadata-local-monitoring", payload.get("metadata_profile"));
-        assertEquals(measurementDuration, payload.get("measurement_duration"));
+        assertTrue(payload.containsKey(BulkSchedulerConstants.FILTER));
+        assertTrue(payload.containsKey(BulkSchedulerConstants.DATASOURCES));
+        assertFalse(payload.containsKey(BulkSchedulerConstants.DATASOURCE)); // Deprecated field not used when list is present
+        assertTrue(payload.containsKey(BulkSchedulerConstants.METADATA_PROFILE));
+        assertTrue(payload.containsKey(BulkSchedulerConstants.MEASUREMENT_DURATION));
+        assertEquals(List.of("prometheus-1"), payload.get(BulkSchedulerConstants.DATASOURCES));
+        assertEquals("cluster-metadata-local-monitoring", payload.get(BulkSchedulerConstants.METADATA_PROFILE));
+        assertEquals(measurementDuration, payload.get(BulkSchedulerConstants.MEASUREMENT_DURATION));
+    }
+
+    /**
+     * Test scheduled bulk API call with multiple datasources
+     *
+     * Test Description: Verifies that the scheduled bulk API call correctly handles
+     * multiple datasources and propagates them in the correct order.
+     *
+     * Expected Behavior:
+     * - Bulk API called with proper payload structure
+     * - Payload contains the complete datasource list in order
+     * - Deprecated datasource field is NOT present when list is available
+     * - Jobs counter incremented
+     */
+    @Test
+    void testScheduledBulkApiCall_MultipleDatasources() {
+        // Arrange
+        when(kruizeStateService.isCacheEmpty()).thenReturn(false);
+        List<String> datasources = List.of("prometheus-1", "prometheus-2");
+        when(kruizeStateService.getDefaultDatasourceNames()).thenReturn(datasources);
+        when(kruizeStateService.getDefaultMetadataProfileName())
+                .thenReturn(Optional.of("cluster-metadata-local-monitoring"));
+        when(kruizeStateService.getDefaultMetricProfileName())
+                .thenReturn(Optional.of("resource-optimization-local-monitoring"));
+        when(kruizeClient.bulkCreateExperiments(any())).thenReturn(mockBulkApiResponse);
+        doNothing().when(jobsService).incrementJobsTriggered();
+
+        // Act
+        bulkSchedulerService.initialize();
+        bulkSchedulerService.scheduledBulkApiCall();
+
+        // Assert
+        ArgumentCaptor<Map<String, Object>> payloadCaptor = ArgumentCaptor.forClass(Map.class);
+        verify(kruizeClient).bulkCreateExperiments(payloadCaptor.capture());
+
+        Map<String, Object> payload = payloadCaptor.getValue();
+        assertNotNull(payload);
+        assertTrue(payload.containsKey(BulkSchedulerConstants.FILTER));
+        assertTrue(payload.containsKey(BulkSchedulerConstants.DATASOURCES));
+        assertFalse(payload.containsKey(BulkSchedulerConstants.DATASOURCE)); // Deprecated field not used when list is present
+        assertTrue(payload.containsKey(BulkSchedulerConstants.METADATA_PROFILE));
+        assertTrue(payload.containsKey(BulkSchedulerConstants.MEASUREMENT_DURATION));
+
+        // Ensure the full list of datasources is propagated and ordered correctly
+        assertEquals(datasources, payload.get(BulkSchedulerConstants.DATASOURCES));
+        
+        verify(jobsService, times(1)).incrementJobsTriggered();
     }
 
     /**
@@ -145,28 +196,30 @@ class BulkSchedulerServiceTest {
     }
 
     /**
-     * Test scheduled bulk API call when no datasource is available
+     * Test scheduled bulk API call when no datasources are available
      *
      * Test Description: Verifies that the scheduled bulk API call does not execute
-     * when no datasource is configured in Kruize.
+     * when no datasources are configured in Kruize.
      *
      * Expected Behavior:
      * - Bulk API not called
      * - Jobs counter not incremented
-     * - Service logs error about missing datasource
+     * - Service logs error about missing datasources (ERROR_NO_DATASOURCES_AVAILABLE)
      */
     @Test
     void testScheduledBulkApiCall_NoDatasource() {
         // Arrange
         when(kruizeStateService.isCacheEmpty()).thenReturn(false);
-        when(kruizeStateService.getDefaultDatasourceName()).thenReturn(Optional.empty());
+        when(kruizeStateService.getDefaultDatasourceNames()).thenReturn(Collections.emptyList());
 
         // Act
         bulkSchedulerService.initialize();
         bulkSchedulerService.scheduledBulkApiCall();
 
-        // Assert - Should not call bulk API
+        // Assert
+        // - Bulk API not called
         verify(kruizeClient, never()).bulkCreateExperiments(any());
+        // - Jobs counter not incremented
         verify(jobsService, never()).incrementJobsTriggered();
     }
 
@@ -241,7 +294,7 @@ class BulkSchedulerServiceTest {
         // Arrange
         when(kruizeStateService.isCacheEmpty()).thenReturn(true);
         doNothing().when(kruizeStateService).refreshState();
-        when(kruizeStateService.getDefaultDatasourceName()).thenReturn(Optional.of("prometheus-1"));
+        when(kruizeStateService.getDefaultDatasourceNames()).thenReturn(List.of("prometheus-1"));
         when(kruizeStateService.getDefaultMetadataProfileName()).thenReturn(Optional.of("cluster-metadata-local-monitoring"));
         when(kruizeStateService.getDefaultMetricProfileName()).thenReturn(Optional.of("resource-optimization-local-monitoring"));
         when(kruizeClient.bulkCreateExperiments(any())).thenReturn(mockBulkApiResponse);
@@ -272,7 +325,7 @@ class BulkSchedulerServiceTest {
     void testScheduledBulkApiCall_ExceptionHandling() {
         // Arrange
         when(kruizeStateService.isCacheEmpty()).thenReturn(false);
-        when(kruizeStateService.getDefaultDatasourceName()).thenReturn(Optional.of("prometheus-1"));
+        when(kruizeStateService.getDefaultDatasourceNames()).thenReturn(List.of("prometheus-1"));
         when(kruizeStateService.getDefaultMetadataProfileName()).thenReturn(Optional.of("cluster-metadata-local-monitoring"));
         when(kruizeStateService.getDefaultMetricProfileName()).thenReturn(Optional.of("resource-optimization-local-monitoring"));
         when(kruizeClient.bulkCreateExperiments(any())).thenThrow(new RuntimeException("API error"));
