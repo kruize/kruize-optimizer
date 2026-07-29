@@ -217,6 +217,11 @@ public final class OptimizerConstants {
         public static final String MEASUREMENT_DURATION = "measurement_duration";
         public static final String WEBHOOK_KEY = "webhook";
         public static final String URL = "url";
+        public static final String CLUSTER_NAME = "cluster_name";
+        public static final String MODEL_SETTINGS = "model_settings";
+        public static final String MODELS = "models";
+        public static final String TERM_SETTINGS = "term_settings";
+        public static final String TERMS = "terms";
     }
 
     // contains profile type constants

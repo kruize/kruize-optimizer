@@ -54,3 +54,11 @@ kruize:
     metadata-profile: ${KRUIZE_DEFAULT_METADATA_PROFILE:cluster-metadata-local-monitoring}
     # Default metric profile name
     metric-profile: ${KRUIZE_DEFAULT_METRIC_PROFILE:resource-optimization-local-monitoring}
+    # Default cluster name
+    cluster-name: ${KRUIZE_DEFAULT_CLUSTER_NAME:default}
+  model:
+    # Default models to use (comma-separated list)
+    defaults: ${KRUIZE_DEFAULT_MODELS:performance}
+  term:
+    # Default terms to use (comma-separated list)
+    defaults: ${KRUIZE_DEFAULT_TERMS:short}

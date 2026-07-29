@@ -64,6 +64,15 @@ public class BulkSchedulerService {
     @ConfigProperty(name = "kruize.bulk.scheduler.startup-delay", defaultValue = "1m")
     String startupDelay;
 
+    @ConfigProperty(name = "kruize.defaults.cluster-name", defaultValue = "default")
+    String clusterName;
+
+    @ConfigProperty(name = "kruize.model.defaults", defaultValue = "performance")
+    String defaultModels;
+
+    @ConfigProperty(name = "kruize.term.defaults", defaultValue = "short")
+    String defaultTerms;
+
     private final Set<String> completedJobs = Collections.newSetFromMap(new java.util.concurrent.ConcurrentHashMap<>());
     private volatile boolean initialized = false;
 
@@ -133,12 +142,19 @@ public class BulkSchedulerService {
                 return;
             }
 
+            // Get cluster name from datasource
+            Optional<String> clusterNameFromDs = kruizeStateService.getClusterNameFromDatasource();
+            String clusterNameToUse = clusterNameFromDs.orElse(clusterName);
+            LOG.debugf("Using cluster name: %s (from datasource: %s, fallback: %s)",
+                    clusterNameToUse, clusterNameFromDs.isPresent(), clusterName);
+
             // Construct the bulk API payload
             Map<String, Object> payload = buildBulkPayload(
                     targetLabels,
                     datasourceName.get(),
                     metadataProfileName.get(),
-                    metricProfileName.get()
+                    metricProfileName.get(),
+                    clusterNameToUse
             );
 
             // Log the exact JSON payload before calling the bulk API
@@ -196,10 +212,12 @@ public class BulkSchedulerService {
      * @param datasource         The datasource name
      * @param metadataProfile    The metadata profile name
      * @param metricProfile      The metric profile name
+     * @param clusterName        The cluster name from datasource
      * @return The bulk API payload as a Map
      */
     private Map<String, Object> buildBulkPayload(Map<String, String> targetLabels,
-                                                   String datasource, String metadataProfile, String metricProfile) {
+                                                   String datasource, String metadataProfile,
+                                                   String metricProfile, String clusterName) {
         Map<String, Object> payload = new HashMap<>();
 
         // Create filter with the target labels
@@ -221,6 +239,21 @@ public class BulkSchedulerService {
         // Add measurement duration
         payload.put(BulkSchedulerConstants.MEASUREMENT_DURATION, measurementDuration);
 
+        // Add cluster name from datasource
+        payload.put(BulkSchedulerConstants.CLUSTER_NAME, clusterName);
+
+        // Add model settings
+        Map<String, Object> modelSettings = new HashMap<>();
+        List<String> models = parseCommaSeparatedList(defaultModels);
+        modelSettings.put(BulkSchedulerConstants.MODELS, models);
+        payload.put(BulkSchedulerConstants.MODEL_SETTINGS, modelSettings);
+
+        // Add term settings
+        Map<String, Object> termSettings = new HashMap<>();
+        List<String> terms = parseCommaSeparatedList(defaultTerms);
+        termSettings.put(BulkSchedulerConstants.TERMS, terms);
+        payload.put(BulkSchedulerConstants.TERM_SETTINGS, termSettings);
+
         // Add webhook URL
         if (webhookUrl != null && !webhookUrl.isEmpty()) {
             Map<String, String> webhook = new HashMap<>();
@@ -230,6 +263,26 @@ public class BulkSchedulerService {
 
         LOG.debugf(MessageConstants.DEBUG_BUILT_BULK_PAYLOAD, payload);
         return payload;
+    }
+
+    /**
+     * Parse comma-separated string into a list
+     *
+     * @param value Comma-separated string
+     * @return List of trimmed values
+     */
+    private List<String> parseCommaSeparatedList(String value) {
+        List<String> result = new ArrayList<>();
+        if (value != null && !value.trim().isEmpty()) {
+            String[] items = value.split(",");
+            for (String item : items) {
+                String trimmed = item.trim();
+                if (!trimmed.isEmpty()) {
+                    result.add(trimmed);
+                }
+            }
+        }
+        return result;
     }
 
     /**
