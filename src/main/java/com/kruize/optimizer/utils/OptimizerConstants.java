@@ -67,25 +67,6 @@ public final class OptimizerConstants {
         // Base path
         public static final String KRUIZE_BASE_PATH = "/kruize";
 
-        // Common endpoint suffixes (reusable across resources)
-        public static final String LIST_PATH = "/list";
-        public static final String INSTALL_PATH = "/install";
-
-        // Datasource endpoints
-        public static final String DATASOURCES_PATH = "/datasources";
-
-        // Metadata Profile endpoints
-        public static final String METADATA_PROFILES_PATH = "/metadataProfiles";
-
-        // Metric Profile endpoints
-        public static final String METRIC_PROFILES_PATH = "/metricProfiles";
-
-        // Layer endpoints
-        public static final String LAYERS_PATH = "/layers";
-
-        // Status endpoint
-        public static final String STATUS_PATH = "/status";
-
         // Jobs endpoints
         public static final String JOBS_PATH = "/jobs";
         public static final String JOBS_OVERVIEW_PATH = "/overview";
@@ -112,9 +93,6 @@ public final class OptimizerConstants {
         }
 
         // Success messages
-        public static final String PROFILES_INSTALLED_SUCCESS = "Profiles installed successfully";
-        public static final String DATASOURCES_FETCHED_SUCCESS = "Datasources fetched successfully";
-        public static final String PROFILES_FETCHED_SUCCESS = "Profiles fetched successfully";
         public static final String JOBS_OVERVIEW_FETCHED_SUCCESS = "Jobs overview fetched successfully";
 
         // Error messages

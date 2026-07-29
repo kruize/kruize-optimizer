@@ -71,41 +71,5 @@ public class JobsService {
             totalExperimentsUnique
         );
     }
-
-    /**
-     * Get total jobs triggered
-     *
-     * @return total jobs triggered
-     */
-    public int getTotalJobsTriggered() {
-        return totalJobsTriggered;
-    }
-
-    /**
-     * Get total experiments created
-     *
-     * @return total experiments created
-     */
-    public int getTotalExperimentsCreated() {
-        return totalExperimentsCreated;
-    }
-
-    /**
-     * Get total experiments processed
-     *
-     * @return total experiments processed
-     */
-    public int getTotalExperimentsProcessed() {
-        return totalExperimentsProcessed;
-    }
-
-    /**
-     * Get total unique experiments
-     *
-     * @return total unique experiments
-     */
-    public int getTotalExperimentsUnique() {
-        return totalExperimentsUnique;
-    }
 }
 

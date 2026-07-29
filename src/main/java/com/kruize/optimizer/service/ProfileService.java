@@ -25,7 +25,6 @@ import com.kruize.optimizer.utils.OptimizerConstants.ProfilePathConstants;
 import jakarta.ws.rs.core.Response;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.jboss.logging.Logger;
 import org.jboss.resteasy.reactive.ClientWebApplicationException;

@@ -67,15 +67,6 @@ public class DatasourceService {
     }
 
     /**
-     * Get datasource count
-     *
-     * @return count of datasources
-     */
-    public int getDatasourceCount() {
-        return getDatasources().size();
-    }
-
-    /**
      * Check if Kruize service is available
      *
      * @return true if available, false otherwise
