@@ -15,33 +15,26 @@
  *******************************************************************************/
 package com.kruize.optimizer.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.kruize.optimizer.client.KruizeClient;
 import com.kruize.optimizer.model.WebhookPayload;
+import com.kruize.optimizer.model.kruize.BulkConfig;
 import com.kruize.optimizer.utils.OptimizerConstants.MessageConstants;
-import com.kruize.optimizer.utils.OptimizerConstants.BulkSchedulerConstants;
 import com.kruize.optimizer.utils.OptimizerConstants.WebhookConstants;
-import io.quarkus.scheduler.Scheduled;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.jboss.logging.Logger;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 /**
- * Service that schedules bulk API calls at configurable intervals
- * with a configurable target label.
+ * Orchestrates bulk-config scheduling: installs/refreshes Kruize state,
+ * starts per-config timers, and handles bulk-job completion webhooks.
  */
 @ApplicationScoped
 public class BulkSchedulerService {
 
     private static final Logger LOG = Logger.getLogger(BulkSchedulerService.class);
-
-    @Inject
-    @RestClient
-    KruizeClient kruizeClient;
 
     @Inject
     KruizeStateService kruizeStateService;
@@ -50,186 +43,29 @@ public class BulkSchedulerService {
     JobsService jobsService;
 
     @Inject
-    ObjectMapper objectMapper;
-
-    @ConfigProperty(name = "kruize.bulk.scheduler.measurement-duration")
-    String measurementDuration;
-
-    @ConfigProperty(name = "kruize.webhook.url")
-    String webhookUrl;
-    
-    @ConfigProperty(name = "kruize.target.labels.json", defaultValue = "{\"kruize/autotune\": \"enabled\"}")
-    String targetLabelsJson;
-
-    @ConfigProperty(name = "kruize.bulk.scheduler.startup-delay", defaultValue = "1m")
-    String startupDelay;
+    ConfigTimerManager configTimerManager;
 
     private final Set<String> completedJobs = Collections.newSetFromMap(new java.util.concurrent.ConcurrentHashMap<>());
     private volatile boolean initialized = false;
 
     /**
-     * Initialize the bulk scheduler by refreshing state and installing missing profiles
+     * Initialize by refreshing state, installing missing profiles/configs,
+     * and starting timers for enabled bulk configs.
      */
     public void initialize() {
         try {
             LOG.info(MessageConstants.INFO_INITIALIZING_BULK_SCHEDULER);
-            
-            // Use common function to refresh state and install missing profiles
+
             kruizeStateService.refreshStateAndInstallProfiles();
-            
+
+            LOG.info("Initializing config-based bulk timers...");
+            configTimerManager.initializeConfigs();
+
             initialized = true;
             LOG.info(MessageConstants.INFO_BULK_SCHEDULER_INITIALIZED);
         } catch (Exception e) {
             LOG.error(MessageConstants.ERROR_FAILED_TO_INITIALIZE_BULK_SCHEDULER, e);
         }
-    }
-
-    /**
-     * Scheduled method that calls the bulk API at the configured interval.
-     * The interval is configured via kruize.bulk.scheduler.interval property.
-     * Waits for initialization to complete before executing.
-     */
-    @Scheduled(every = "${kruize.bulk.scheduler.interval:5m}", delayed = "${kruize.bulk.scheduler.startup-delay:1m}")
-    public void scheduledBulkApiCall() {
-        if (!initialized) {
-            LOG.debug(MessageConstants.INFO_BULK_SCHEDULER_NOT_INITIALIZED);
-            return;
-        }
-
-        LOG.infof(MessageConstants.INFO_STARTING_SCHEDULED_BULK_API_CALL, targetLabelsJson);
-
-        try {
-            // Parse target labels from JSON
-            Map<String, String> targetLabels = parseTargetLabels();
-            if (targetLabels.isEmpty()) {
-                LOG.error(MessageConstants.ERROR_NO_VALID_TARGET_LABELS);
-                return;
-            }
-
-            // Check if state cache is empty, refresh if needed
-            if (kruizeStateService.isCacheEmpty()) {
-                LOG.debug(MessageConstants.INFO_KRUIZE_STATE_CACHE_EMPTY);
-                kruizeStateService.refreshState();
-            }
-
-            // Get datasource from global state
-            Optional<String> datasourceName = kruizeStateService.getDefaultDatasourceName();
-            if (!datasourceName.isPresent()) {
-                LOG.error(MessageConstants.ERROR_NO_DATASOURCE_AVAILABLE);
-                return;
-            }
-
-            // Get metadata profile from global state
-            Optional<String> metadataProfileName = kruizeStateService.getDefaultMetadataProfileName();
-            if (!metadataProfileName.isPresent()) {
-                LOG.error(MessageConstants.ERROR_NO_METADATA_PROFILE_AVAILABLE);
-                return;
-            }
-
-            // Get metric profile from global state
-            Optional<String> metricProfileName = kruizeStateService.getDefaultMetricProfileName();
-            if (!metricProfileName.isPresent()) {
-                LOG.error(MessageConstants.ERROR_NO_METRIC_PROFILE_AVAILABLE);
-                return;
-            }
-
-            // Construct the bulk API payload
-            Map<String, Object> payload = buildBulkPayload(
-                    targetLabels,
-                    datasourceName.get(),
-                    metadataProfileName.get(),
-                    metricProfileName.get()
-            );
-
-            // Log the exact JSON payload before calling the bulk API
-            try {
-                String jsonPayload = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(payload);
-                LOG.infof(MessageConstants.INFO_CALLING_BULK_API_WITH_PAYLOAD, jsonPayload);
-            } catch (Exception e) {
-                LOG.warnf(e, MessageConstants.WARN_FAILED_TO_SERIALIZE_PAYLOAD);
-            }
-
-            // Call the bulk API
-            String response = kruizeClient.bulkCreateExperiments(payload);
-            LOG.infof(MessageConstants.INFO_BULK_API_CALL_SUCCESSFUL, response);
-
-            // Increment job counter in global state
-            jobsService.incrementJobsTriggered();
-
-        } catch (Exception e) {
-            LOG.errorf(e, MessageConstants.ERROR_FAILED_TO_EXECUTE_SCHEDULED_BULK_API_CALL);
-        }
-    }
-
-    /**
-     * Parse target labels from JSON configuration
-     *
-     * @return Map of label key-value pairs
-     */
-    private Map<String, String> parseTargetLabels() {
-        Map<String, String> labels = new HashMap<>();
-        try {
-            // Simple JSON parsing for {"key": "value"} format
-            String json = targetLabelsJson.trim();
-            if (json.startsWith("{") && json.endsWith("}")) {
-                json = json.substring(1, json.length() - 1);
-                String[] pairs = json.split(",");
-                for (String pair : pairs) {
-                    String[] keyValue = pair.split(":", 2);
-                    if (keyValue.length == 2) {
-                        String key = keyValue[0].trim().replaceAll("\"", "");
-                        String value = keyValue[1].trim().replaceAll("\"", "");
-                        labels.put(key, value);
-                    }
-                }
-            }
-        } catch (Exception e) {
-            LOG.errorf(e, MessageConstants.ERROR_FAILED_TO_PARSE_TARGET_LABELS, targetLabelsJson);
-        }
-        return labels;
-    }
-
-    /**
-     * Builds the payload for the bulk API call.
-     *
-     * @param targetLabels       The target labels to filter workloads
-     * @param datasource         The datasource name
-     * @param metadataProfile    The metadata profile name
-     * @param metricProfile      The metric profile name
-     * @return The bulk API payload as a Map
-     */
-    private Map<String, Object> buildBulkPayload(Map<String, String> targetLabels,
-                                                   String datasource, String metadataProfile, String metricProfile) {
-        Map<String, Object> payload = new HashMap<>();
-
-        // Create filter with the target labels
-        Map<String, Object> filter = new HashMap<>();
-        Map<String, Object> include = new HashMap<>();
-        
-        // Add label filter
-        include.put(BulkSchedulerConstants.LABELS, targetLabels);
-
-        filter.put(BulkSchedulerConstants.INCLUDE, include);
-        payload.put(BulkSchedulerConstants.FILTER, filter);
-
-        // Add datasource from global state
-        payload.put(BulkSchedulerConstants.DATASOURCE, datasource);
-
-        // Add metadata profile from global state
-        payload.put(BulkSchedulerConstants.METADATA_PROFILE, metadataProfile);
-
-        // Add measurement duration
-        payload.put(BulkSchedulerConstants.MEASUREMENT_DURATION, measurementDuration);
-
-        // Add webhook URL
-        if (webhookUrl != null && !webhookUrl.isEmpty()) {
-            Map<String, String> webhook = new HashMap<>();
-            webhook.put(BulkSchedulerConstants.URL, webhookUrl);
-            payload.put(BulkSchedulerConstants.WEBHOOK_KEY, webhook);
-        }
-
-        LOG.debugf(MessageConstants.DEBUG_BUILT_BULK_PAYLOAD, payload);
-        return payload;
     }
 
     /**
@@ -255,7 +91,6 @@ public class BulkSchedulerService {
                     int processed = summary.getProcessedExperiments();
                     int existing = summary.getExistingExperiments();
 
-                    // Update experiment counters in global state
                     jobsService.updateExperimentCounters(total, processed, existing);
 
                     LOG.infof(MessageConstants.INFO_JOB_COMPLETED,
@@ -266,5 +101,26 @@ public class BulkSchedulerService {
             }
         }
     }
-}
 
+    /**
+     * @return whether initialize() completed successfully
+     */
+    public boolean isInitialized() {
+        return initialized;
+    }
+
+    /**
+     * Handle config update webhook from Kruize
+     *
+     * @param updatedConfig Updated bulk config
+     */
+    public void handleConfigUpdate(BulkConfig updatedConfig) {
+        if (updatedConfig == null) {
+            LOG.warn("Ignoring config update: updatedConfig is null");
+            return;
+        }
+
+        LOG.infof("Received config update for: %s", updatedConfig.getConfigName());
+        configTimerManager.updateConfigTimer(updatedConfig);
+    }
+}
