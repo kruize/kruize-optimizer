@@ -1,0 +1,22 @@
+{
+  "config_name": "default-bulk-config",
+  "cluster_name": "default",
+  "datasources": ["thanos-1"],
+  "namespaces": [],
+  "labels": {
+    "ibm.runtimes.intelligence.monitoring": "true"
+  },
+  "experiment_types": ["container"],
+  "metadata_profile": "cluster-metadata-local-monitoring",
+  "performance_profile": "resource-optimization-local-monitoring",
+  "trial_settings": {
+    "measurement_duration": "15min"
+  },
+  "recommendation_settings": {
+    "scheduling": "1h",
+    "terms": ["short"],
+    "models": ["performance"]
+  },
+  "webhook_url": "http://kruize-optimizer:8080/webhook/config-update",
+  "enabled": true
+}
