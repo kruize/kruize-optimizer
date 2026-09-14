@@ -18,6 +18,8 @@ package com.kruize.optimizer.model.kruize;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.List;
+
 /**
  * Model representing a Kruize datasource
  */
@@ -32,6 +34,8 @@ public class Datasource {
     private String serviceName;
 
     private String namespace;
+
+    private List<String> clusters;
 
     public Datasource() {
     }
@@ -82,6 +86,14 @@ public class Datasource {
         this.namespace = namespace;
     }
 
+    public List<String> getClusters() {
+        return clusters;
+    }
+
+    public void setClusters(List<String> clusters) {
+        this.clusters = clusters;
+    }
+
     @Override
     public String toString() {
         return "Datasource{" +
@@ -90,6 +102,7 @@ public class Datasource {
                 ", url='" + url + '\'' +
                 ", serviceName='" + serviceName + '\'' +
                 ", namespace='" + namespace + '\'' +
+                ", clusters=" + clusters +
                 '}';
     }
 }

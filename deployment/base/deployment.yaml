@@ -72,6 +72,18 @@ spec:
             # Default metric profile name
             - name: KRUIZE_DEFAULT_METRIC_PROFILE
               value: "resource-optimization-local-monitoring"
+            
+            # Default cluster name
+            - name: KRUIZE_DEFAULT_CLUSTER_NAME
+              value: "default"
+            
+            # Default models (comma-separated list)
+            - name: KRUIZE_DEFAULT_MODELS
+              value: "performance"
+            
+            # Default terms (comma-separated list)
+            - name: KRUIZE_DEFAULT_TERMS
+              value: "short"
 ---
 apiVersion: v1
 kind: Service
