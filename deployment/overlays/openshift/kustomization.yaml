@@ -18,8 +18,13 @@ patches:
             containers:
               - name: kruize-optimizer
                 env:
+                  # Deprecated - use KRUIZE_DEFAULT_DATASOURCES for multi-datasource support
                   - name: KRUIZE_DEFAULT_DATASOURCE
                     value: "thanos-1"
+                  # New - comma-separated list of datasources (takes precedence over single datasource)
+                  # Example: "thanos-1,prometheus-1"
+                  - name: KRUIZE_DEFAULT_DATASOURCES
+                    value: "thanos-1,cryostat-2"
     target:
       kind: Deployment
       name: kruize-optimizer

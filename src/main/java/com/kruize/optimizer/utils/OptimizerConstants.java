@@ -136,6 +136,7 @@ public final class OptimizerConstants {
         public static final String ERROR_FAILED_TO_INITIALIZE_BULK_SCHEDULER = "Failed to initialize bulk scheduler";
         public static final String ERROR_NO_VALID_TARGET_LABELS = "No valid target labels found. Cannot proceed with bulk API call.";
         public static final String ERROR_NO_DATASOURCE_AVAILABLE = "No datasource available in Kruize. Cannot proceed with bulk API call.";
+        public static final String ERROR_NO_DATASOURCES_AVAILABLE = "No datasources available in Kruize. Cannot proceed with bulk API call.";
         public static final String ERROR_NO_METADATA_PROFILE_AVAILABLE = "No metadata profile available in Kruize. Cannot proceed with bulk API call.";
         public static final String ERROR_NO_METRIC_PROFILE_AVAILABLE = "No metric profile available in Kruize. Cannot proceed with bulk API call.";
         public static final String ERROR_FAILED_TO_PARSE_TARGET_LABELS = "Failed to parse target labels JSON: %s";
@@ -212,7 +213,8 @@ public final class OptimizerConstants {
         public static final String FILTER = "filter";
         public static final String INCLUDE = "include";
         public static final String LABELS = "labels";
-        public static final String DATASOURCE = "datasource";
+        public static final String DATASOURCE = "datasource"; // Deprecated - kept for backward compatibility
+        public static final String DATASOURCES = "datasources"; // New - list of datasource names
         public static final String METADATA_PROFILE = "metadata_profile";
         public static final String MEASUREMENT_DURATION = "measurement_duration";
         public static final String WEBHOOK_KEY = "webhook";

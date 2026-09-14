@@ -48,8 +48,11 @@ kruize:
       # Note: Default value must be set via environment variable to avoid YAML parsing issues
       json: ${KRUIZE_TARGET_LABELS}
   defaults:
-    # Default datasource name
+    # Default datasource name (deprecated - use datasources for multi-datasource support)
     datasource: ${KRUIZE_DEFAULT_DATASOURCE:prometheus-1}
+    # Default datasources (comma-separated list, e.g., "prometheus-1,prometheus-2")
+    # Takes precedence over single datasource config
+    datasources: ${KRUIZE_DATASOURCES:}
     # Default metadata profile name
     metadata-profile: ${KRUIZE_DEFAULT_METADATA_PROFILE:cluster-metadata-local-monitoring}
     # Default metric profile name
