@@ -54,11 +54,21 @@ public class ConfigTimerManager {
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(SCHEDULER_THREAD_POOL_SIZE);
 
     /**
-     * Schedule a timer for a config
+     * Schedule a timer for a config (executes immediately, then on interval)
      *
      * @param config Bulk config to schedule
      */
     public void scheduleConfig(BulkConfig config) {
+        scheduleConfig(config, 0);
+    }
+
+    /**
+     * Schedule a timer for a config with a custom initial delay
+     *
+     * @param config Bulk config to schedule
+     * @param initialDelayMillis delay before first execution
+     */
+    public void scheduleConfig(BulkConfig config, long initialDelayMillis) {
         String configName = config.getConfigName();
 
         if (config.getRecommendationSettings() == null
@@ -70,17 +80,35 @@ public class ConfigTimerManager {
         // Cancel existing timer if any
         cancelConfigTimer(configName);
 
+        if (config.getRecommendationSettings() == null
+                || config.getRecommendationSettings().getScheduling() == null
+                || config.getRecommendationSettings().getScheduling().isBlank()) {
+            LOG.errorf("Cannot schedule config '%s': recommendation_settings.scheduling is missing",
+                    configName);
+            return;
+        }
+
         // Parse scheduling interval
         Duration interval = bulkConfigService.parseScheduling(
                 config.getRecommendationSettings().getScheduling()
         );
 
-        LOG.infof("Scheduling config '%s' with interval: %s", configName, interval);
+        long delay = Math.max(0, initialDelayMillis);
+        LOG.infof("Scheduling config '%s' with interval: %s (initial delay: %dms)",
+                configName, interval, delay);
 
-        // Schedule recurring task
+        // Catch Throwable so scheduleAtFixedRate does not permanently cancel the timer
         ScheduledFuture<?> future = scheduler.scheduleAtFixedRate(
-                () -> executeConfigJob(config),
-                0,  // Initial delay = 0 (execute immediately)
+                () -> {
+                    try {
+                        executeConfigJob(config);
+                    } catch (Throwable t) {
+                        LOG.errorf(t,
+                                "Unexpected error executing bulk job for config '%s'; timer will continue",
+                                config.getConfigName());
+                    }
+                },
+                delay,
                 interval.toMillis(),
                 TimeUnit.MILLISECONDS
         );
@@ -114,9 +142,10 @@ public class ConfigTimerManager {
         }
 
         if (updatedConfig.getRecommendationSettings() == null
-                || updatedConfig.getRecommendationSettings().getScheduling() == null) {
-            LOG.warnf("Config '%s' has no recommendation_settings or scheduling, canceling timer", configName);
-            cancelConfigTimer(configName);
+                || updatedConfig.getRecommendationSettings().getScheduling() == null
+                || updatedConfig.getRecommendationSettings().getScheduling().isBlank()) {
+            LOG.errorf("Cannot update timer for config '%s': recommendation_settings.scheduling is missing",
+                    configName);
             return;
         }
 
@@ -125,17 +154,21 @@ public class ConfigTimerManager {
                 updatedConfig.getRecommendationSettings().getScheduling()
         );
 
-        // Get time until next execution
-        long delayMillis = currentTimer.getDelay(TimeUnit.MILLISECONDS);
+        // Get time until next execution (may be negative if currently running)
+        long delayMillis = Math.max(0, currentTimer.getDelay(TimeUnit.MILLISECONDS));
+
+        cancelConfigTimer(configName);
 
         if (delayMillis > newInterval.toMillis()) {
-            // New interval is shorter - execute immediately and reschedule
-            LOG.infof("Config '%s' interval shortened from %dms to %dms, executing immediately",
+            // Remaining wait exceeds new interval - run soon, then use new period
+            LOG.infof("Config '%s' interval shortened (remaining %dms > new %dms), executing immediately",
                     configName, delayMillis, newInterval.toMillis());
+            scheduleConfig(updatedConfig, 0);
         } else {
-            // New interval is longer or similar - just reschedule for next run
-            LOG.infof("Config '%s' interval changed to %s, rescheduling",
-                    configName, newInterval);
+            // Preserve remaining delay before applying the new period
+            LOG.infof("Config '%s' interval changed to %s, rescheduling with remaining delay %dms",
+                    configName, newInterval, delayMillis);
+            scheduleConfig(updatedConfig, delayMillis);
         }
 
         cancelConfigTimer(configName);

@@ -21,13 +21,6 @@ kruize:
     metadata-profile: cluster-metadata-local-monitoring
     metric-profile: resource-optimization-local-monitoring
   
-  # Bulk scheduler configuration
-  bulk:
-    scheduler:
-      interval: 5m
-      measurement-duration: 15m
-      startup-delay: 1m
-  
   # Webhook configuration
   webhook:
     url: http://kruize-optimizer:8080/webhook
