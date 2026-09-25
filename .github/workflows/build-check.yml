@@ -1,14 +1,11 @@
 name: Build Check
 
 on:
-  # Triggers on direct pushes to key branches
   push:
     branches: [ main, mvp_demo ]
-  # Triggers on Pull Requests opened against ANY branch
   pull_request:
     branches: [ '**' ]
 
-# Automatically cancel in-progress runs on the same PR/branch when new commits are pushed
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -31,10 +28,22 @@ jobs:
       - name: Make Maven wrapper executable
         run: chmod +x mvnw
 
+      # Sets image tag to PR number (pr-12) or sanitized Branch name (e.g. main)
+      - name: Set Image Tag
+        id: image_tag
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "TAG=pr-${{ github.event.number }}" >> $GITHUB_OUTPUT
+          else
+            # Replaces slashes with dashes to prevent invalid Docker tags (e.g. feature/demo -> feature-demo)
+            CLEAN_REF=$(echo "${{ github.ref_name }}" | sed 's/\//-/g')
+            echo "TAG=${CLEAN_REF}" >> $GITHUB_OUTPUT
+          fi
+
       - name: Test Quarkus Container Build
         run: |
           ./mvnw clean package \
             -Dquarkus.container-image.build=true \
             -Dquarkus.container-image.push=false \
-            -Dquarkus.container-image.image="quay.io/kruize/optimizer:test" \
+            -Dquarkus.container-image.image="quay.io/kruizehub/optimizer:${{ steps.image_tag.outputs.TAG }}" \
             -Dquarkus.jib.platforms="linux/amd64"
