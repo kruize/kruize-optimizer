@@ -29,14 +29,6 @@ kruize:
     refresh:
       # Interval to refresh state and install missing profiles
       interval: ${KRUIZE_STATE_REFRESH_INTERVAL:60m}
-  bulk:
-    scheduler:
-      # Interval to call bulk API (cron format or duration)
-      interval: ${KRUIZE_BULK_SCHEDULER_INTERVAL:15m}
-      # Startup delay before first bulk API call
-      startup-delay: ${KRUIZE_BULK_SCHEDULER_STARTUP_DELAY:1m}
-      # Measurement duration for bulk API calls
-      measurement-duration: ${KRUIZE_BULK_MEASUREMENT_DURATION:15min}
   webhook:
     # Webhook URL for bulk API callbacks
     url: ${KRUIZE_WEBHOOK_URL:http://kruize-optimizer:8080/webhook}
