@@ -17,8 +17,10 @@ package com.kruize.optimizer.resource;
 
 import com.kruize.optimizer.client.KruizeClient;
 import com.kruize.optimizer.model.WebhookPayload;
+import com.kruize.optimizer.model.kruize.BulkConfig;
 import com.kruize.optimizer.service.BulkSchedulerService;
 import com.kruize.optimizer.service.KruizeStateService;
+import com.kruize.optimizer.utils.OptimizerConstants.MessageConstants;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.http.ContentType;
@@ -32,7 +34,9 @@ import java.util.Collections;
 import java.util.List;
 
 import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.*;
 
 /**
@@ -300,6 +304,135 @@ class WebhookResourceTest {
             .statusCode(200);
         
         verify(bulkSchedulerService, times(1)).handleWebhook(any());
+    }
+
+    /**
+     * Test successful config-update webhook
+     *
+     * Test Description: Verifies that POST /webhook/config-update accepts a bulk config
+     * with a name and delegates it to the scheduler.
+     *
+     * Test Payload:
+     * - config_name: "bulk-default"
+     *
+     * Expected Output:
+     * - HTTP Status: 200 OK
+     * - BulkSchedulerService.handleConfigUpdate() called once with that config name
+     */
+    @Test
+    void testReceiveConfigUpdate_Success() {
+        BulkConfig config = new BulkConfig();
+        config.setConfigName("bulk-default");
+        doNothing().when(bulkSchedulerService).handleConfigUpdate(any());
+
+        given()
+            .contentType(ContentType.JSON)
+            .body(config)
+            .when()
+            .post("/webhook/config-update")
+            .then()
+            .statusCode(200);
+
+        verify(bulkSchedulerService, times(1)).handleConfigUpdate(argThat(
+                updated -> updated != null && "bulk-default".equals(updated.getConfigName())));
+    }
+
+    /**
+     * Test config-update webhook with a null body
+     *
+     * Test Description: Verifies that a null config is rejected before the scheduler is called.
+     *
+     * Expected Output:
+     * - HTTP Status: 400 Bad Request
+     * - Body: config name is required
+     * - BulkSchedulerService.handleConfigUpdate() never called
+     */
+    @Test
+    void testReceiveConfigUpdate_NullConfig() {
+        given()
+            .contentType(ContentType.JSON)
+            .body("null")
+            .when()
+            .post("/webhook/config-update")
+            .then()
+            .statusCode(400)
+            .body(equalTo(MessageConstants.VALIDATION_ERROR_CONFIG_NAME_REQUIRED));
+
+        verify(bulkSchedulerService, never()).handleConfigUpdate(any());
+    }
+
+    /**
+     * Test config-update webhook with a missing config name
+     *
+     * Test Description: Verifies that a config object without config_name is rejected.
+     *
+     * Expected Output:
+     * - HTTP Status: 400 Bad Request
+     * - BulkSchedulerService.handleConfigUpdate() never called
+     */
+    @Test
+    void testReceiveConfigUpdate_MissingConfigName() {
+        given()
+            .contentType(ContentType.JSON)
+            .body("{}")
+            .when()
+            .post("/webhook/config-update")
+            .then()
+            .statusCode(400)
+            .body(equalTo(MessageConstants.VALIDATION_ERROR_CONFIG_NAME_REQUIRED));
+
+        verify(bulkSchedulerService, never()).handleConfigUpdate(any());
+    }
+
+    /**
+     * Test config-update webhook with a blank config name
+     *
+     * Test Description: Verifies that a whitespace-only config_name is rejected.
+     *
+     * Expected Output:
+     * - HTTP Status: 400 Bad Request
+     * - BulkSchedulerService.handleConfigUpdate() never called
+     */
+    @Test
+    void testReceiveConfigUpdate_BlankConfigName() {
+        given()
+            .contentType(ContentType.JSON)
+            .body("{\"config_name\": \"   \"}")
+            .when()
+            .post("/webhook/config-update")
+            .then()
+            .statusCode(400)
+            .body(equalTo(MessageConstants.VALIDATION_ERROR_CONFIG_NAME_REQUIRED));
+
+        verify(bulkSchedulerService, never()).handleConfigUpdate(any());
+    }
+
+    /**
+     * Test config-update webhook when the scheduler fails
+     *
+     * Test Description: Verifies that an exception from handleConfigUpdate is returned as
+     * an HTTP 500 and includes the failure message.
+     *
+     * Expected Output:
+     * - HTTP Status: 500 Internal Server Error
+     * - Body contains the scheduler exception message
+     */
+    @Test
+    void testReceiveConfigUpdate_ProcessingError() {
+        BulkConfig config = new BulkConfig();
+        config.setConfigName("bulk-default");
+        doThrow(new RuntimeException("timer failed")).when(bulkSchedulerService).handleConfigUpdate(any());
+
+        given()
+            .contentType(ContentType.JSON)
+            .body(config)
+            .when()
+            .post("/webhook/config-update")
+            .then()
+            .statusCode(500)
+            .body(equalTo(String.format(MessageConstants.ERROR_PROCESSING_CONFIG_UPDATE_WEBHOOK_WITH_MESSAGE, "timer failed")));
+
+        verify(bulkSchedulerService, times(1)).handleConfigUpdate(any());
     }
 }
 

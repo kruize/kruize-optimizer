@@ -16,6 +16,7 @@
 package com.kruize.optimizer.resource;
 
 import com.kruize.optimizer.model.WebhookPayload;
+import com.kruize.optimizer.model.kruize.BulkConfig;
 import com.kruize.optimizer.service.BulkSchedulerService;
 import com.kruize.optimizer.utils.OptimizerConstants.MessageConstants;
 import com.kruize.optimizer.utils.OptimizerConstants.OptimizerApiConstants;
@@ -85,6 +86,39 @@ public class WebhookResource {
         } catch (Exception e) {
             LOG.error(MessageConstants.ERROR_PROCESSING_WEBHOOK, e);
             return Response.serverError().entity(String.format(MessageConstants.ERROR_PROCESSING_WEBHOOK_WITH_MESSAGE, e.getMessage())).build();
+        }
+    }
+
+    /**
+     * Receive config update webhook from Kruize
+     *
+     * @param config Updated bulk config
+     * @return HTTP response
+     */
+    @POST
+    @Path("/config-update")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response receiveConfigUpdate(BulkConfig config) {
+        LOG.debugf(MessageConstants.INFO_RECEIVED_CONFIG_UPDATE_WEBHOOK,
+                config != null ? config.getConfigName() : "null");
+
+        // Validate config
+        if (config == null || config.getConfigName() == null || config.getConfigName().trim().isEmpty()) {
+            LOG.error(MessageConstants.ERROR_INVALID_CONFIG_UPDATE_NULL_OR_EMPTY);
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(MessageConstants.VALIDATION_ERROR_CONFIG_NAME_REQUIRED)
+                    .build();
+        }
+
+        try {
+            bulkSchedulerService.handleConfigUpdate(config);
+            return Response.ok().build();
+        } catch (Exception e) {
+            LOG.error(MessageConstants.ERROR_PROCESSING_CONFIG_UPDATE_WEBHOOK, e);
+            return Response.serverError()
+                    .entity(String.format(MessageConstants.ERROR_PROCESSING_CONFIG_UPDATE_WEBHOOK_WITH_MESSAGE, e.getMessage()))
+                    .build();
         }
     }
 }
