@@ -17,6 +17,6 @@
     "terms": ["short"],
     "models": ["performance"]
   },
-  "webhook_url": "http://kruize-optimizer:8080/webhook/config-update",
+  "webhook_url": "http://kruize-optimizer:8080/webhook/config/bulk",
   "enabled": true
 }

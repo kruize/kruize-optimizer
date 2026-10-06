@@ -92,6 +92,7 @@ public final class OptimizerConstants {
 
         // Webhook endpoint
         public static final String WEBHOOK_PATH = "/webhook";
+        public static final String WEBHOOK_CONFIG_BULK_PATH = "/config/bulk";
     }
 
     // contains generic constants related to Optimizer application
@@ -130,7 +131,11 @@ public final class OptimizerConstants {
         public static final String ERROR_INVALID_WEBHOOK_PAYLOAD_NULL_OR_EMPTY = "Invalid webhook payload: payload is null or empty";
         public static final String ERROR_INVALID_WEBHOOK_PAYLOAD_MISSING_SUMMARY = "Invalid webhook payload: missing summary";
         public static final String ERROR_INVALID_WEBHOOK_PAYLOAD_MISSING_JOB_ID = "Invalid webhook payload: missing or empty jobId";
+        public static final String ERROR_INVALID_CONFIG_UPDATE_NULL_OR_EMPTY = "Invalid config update: config or config name is null/empty";
+        public static final String ERROR_PROCESSING_CONFIG_UPDATE_WEBHOOK = "Error processing config update webhook";
+        public static final String ERROR_PROCESSING_CONFIG_UPDATE_WEBHOOK_WITH_MESSAGE = "Error processing config update: %s";
         public static final String VALIDATION_ERROR_PAYLOAD_NULL_OR_EMPTY = "Invalid webhook payload: payload cannot be null or empty";
+        public static final String VALIDATION_ERROR_CONFIG_NAME_REQUIRED = "Invalid config update: config name is required";
         public static final String VALIDATION_ERROR_SUMMARY_REQUIRED = "Invalid webhook payload: summary is required";
         public static final String VALIDATION_ERROR_JOB_ID_REQUIRED = "Invalid webhook payload: jobId is required and cannot be empty";
         public static final String ERROR_FAILED_TO_INITIALIZE_BULK_SCHEDULER = "Failed to initialize bulk scheduler";
@@ -159,6 +164,7 @@ public final class OptimizerConstants {
         public static final String INFO_CALLING_BULK_API_WITH_PAYLOAD = "Calling bulk API with payload:\n%s";
         public static final String INFO_BULK_API_CALL_SUCCESSFUL = "Bulk API call successful. Response: %s";
         public static final String INFO_RECEIVED_WEBHOOK = "Received webhook with %d payload(s)";
+        public static final String INFO_RECEIVED_CONFIG_UPDATE_WEBHOOK = "Received config update webhook for: %s";
         public static final String INFO_RECEIVED_WEBHOOK_FOR_JOB = "Received webhook for Job %s with status %s";
         public static final String INFO_JOB_ALREADY_PROCESSED = "Job %s already processed. Skipping.";
         public static final String INFO_JOB_COMPLETED = "Job %s completed. Total: %d, Processed: %d, Existing: %d";
