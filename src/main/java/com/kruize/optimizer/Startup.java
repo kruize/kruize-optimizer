@@ -20,6 +20,7 @@ import io.quarkus.runtime.StartupEvent;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
 
 /**
@@ -33,16 +34,16 @@ public class Startup {
     @Inject
     BulkSchedulerService bulkSchedulerService;
 
-    /**
-     * Executes at the end of application startup.
-     * Initializes the bulk scheduler by refreshing state and installing missing profiles.
-     *
-     * @param ev The Quarkus StartupEvent.
-     */
+    @ConfigProperty(name = "kruize.startup.initialize", defaultValue = "true")
+    boolean initializeOnStartup;
+
     void onStart(@Observes StartupEvent ev) {
         LOG.info("Kruize Optimizer Service is STARTED!");
-        
-        // Initialize bulk scheduler (refresh state and install missing profiles)
-        bulkSchedulerService.initialize();
+
+        if (initializeOnStartup) {
+            bulkSchedulerService.initialize();
+        } else {
+            LOG.info("Startup initialization is disabled (kruize.startup.initialize=false)");
+        }
     }
 }
