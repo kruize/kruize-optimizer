@@ -79,14 +79,12 @@ public class ProfileService {
                     LOG.warn("Failed to read response body", ex);
                 }
             }
-            LOG.error(MessageConstants.KRUIZE_SERVICE_UNAVAILABLE, e);
             throw new KruizeServiceException(
                 MessageConstants.KRUIZE_SERVICE_UNAVAILABLE,
                 e,
                 Response.Status.SERVICE_UNAVAILABLE.getStatusCode()
             );
         } catch (Exception e) {
-            LOG.error(MessageConstants.KRUIZE_SERVICE_UNAVAILABLE, e);
             throw new KruizeServiceException(
                 MessageConstants.KRUIZE_SERVICE_UNAVAILABLE,
                 e,
@@ -124,14 +122,12 @@ public class ProfileService {
                     LOG.warn("Failed to read response body", ex);
                 }
             }
-            LOG.error(MessageConstants.KRUIZE_SERVICE_UNAVAILABLE, e);
             throw new KruizeServiceException(
                 MessageConstants.KRUIZE_SERVICE_UNAVAILABLE,
                 e,
                 Response.Status.SERVICE_UNAVAILABLE.getStatusCode()
             );
         } catch (Exception e) {
-            LOG.error(MessageConstants.KRUIZE_SERVICE_UNAVAILABLE, e);
             throw new KruizeServiceException(
                 MessageConstants.KRUIZE_SERVICE_UNAVAILABLE,
                 e,
@@ -167,14 +163,12 @@ public class ProfileService {
                     LOG.warn("Failed to read response body", ex);
                 }
             }
-            LOG.error(MessageConstants.KRUIZE_SERVICE_UNAVAILABLE, e);
             throw new KruizeServiceException(
                 MessageConstants.KRUIZE_SERVICE_UNAVAILABLE,
                 e,
                 Response.Status.SERVICE_UNAVAILABLE.getStatusCode()
             );
         } catch (Exception e) {
-            LOG.error(MessageConstants.KRUIZE_SERVICE_UNAVAILABLE, e);
             throw new KruizeServiceException(
                 MessageConstants.KRUIZE_SERVICE_UNAVAILABLE,
                 e,
@@ -220,14 +214,12 @@ public class ProfileService {
                     LOG.warn("Failed to read response body", ex);
                 }
             }
-            LOG.error(MessageConstants.KRUIZE_SERVICE_UNAVAILABLE, e);
             throw new KruizeServiceException(
                     MessageConstants.KRUIZE_SERVICE_UNAVAILABLE,
                     e,
                     Response.Status.SERVICE_UNAVAILABLE.getStatusCode()
             );
         } catch (Exception e) {
-            LOG.error(MessageConstants.KRUIZE_SERVICE_UNAVAILABLE, e);
             throw new KruizeServiceException(
                     MessageConstants.KRUIZE_SERVICE_UNAVAILABLE,
                     e,

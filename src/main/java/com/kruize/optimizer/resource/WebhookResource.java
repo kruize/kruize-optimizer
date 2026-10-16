@@ -62,7 +62,7 @@ public class WebhookResource {
         
         // Validate payload
         if (payload == null || payload.isEmpty()) {
-            LOG.error(MessageConstants.ERROR_INVALID_WEBHOOK_PAYLOAD_NULL_OR_EMPTY);
+            LOG.warn(MessageConstants.ERROR_INVALID_WEBHOOK_PAYLOAD_NULL_OR_EMPTY);
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity(MessageConstants.VALIDATION_ERROR_PAYLOAD_NULL_OR_EMPTY)
                     .build();
@@ -71,7 +71,7 @@ public class WebhookResource {
         // Validate each payload in the list
         for (WebhookPayload webhookPayload : payload) {
             if (webhookPayload == null || webhookPayload.getSummary() == null) {
-                LOG.error(MessageConstants.ERROR_INVALID_WEBHOOK_PAYLOAD_MISSING_SUMMARY);
+                LOG.warn(MessageConstants.ERROR_INVALID_WEBHOOK_PAYLOAD_MISSING_SUMMARY);
                 return Response.status(Response.Status.BAD_REQUEST)
                         .entity(MessageConstants.VALIDATION_ERROR_SUMMARY_REQUIRED)
                         .build();
@@ -79,7 +79,7 @@ public class WebhookResource {
             
             WebhookPayload.Summary summary = webhookPayload.getSummary();
             if (summary.getJobId() == null || summary.getJobId().trim().isEmpty()) {
-                LOG.error(MessageConstants.ERROR_INVALID_WEBHOOK_PAYLOAD_MISSING_JOB_ID);
+                LOG.warn(MessageConstants.ERROR_INVALID_WEBHOOK_PAYLOAD_MISSING_JOB_ID);
                 return Response.status(Response.Status.BAD_REQUEST)
                         .entity(MessageConstants.VALIDATION_ERROR_JOB_ID_REQUIRED)
                         .build();
@@ -90,7 +90,7 @@ public class WebhookResource {
             bulkSchedulerService.handleWebhook(payload);
             return Response.ok().build();
         } catch (Exception e) {
-            LOG.error(MessageConstants.ERROR_PROCESSING_WEBHOOK, e);
+            LOG.errorf("%s: %s", MessageConstants.ERROR_PROCESSING_WEBHOOK, e.getMessage());
             return Response.serverError().entity(String.format(MessageConstants.ERROR_PROCESSING_WEBHOOK_WITH_MESSAGE, e.getMessage())).build();
         }
     }
@@ -113,7 +113,7 @@ public class WebhookResource {
 
         // Validate config
         if (config == null || config.getConfigName() == null || config.getConfigName().trim().isEmpty()) {
-            LOG.error(MessageConstants.ERROR_INVALID_CONFIG_UPDATE_NULL_OR_EMPTY);
+            LOG.warn(MessageConstants.ERROR_INVALID_CONFIG_UPDATE_NULL_OR_EMPTY);
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity(MessageConstants.VALIDATION_ERROR_CONFIG_NAME_REQUIRED)
                     .build();
@@ -123,7 +123,7 @@ public class WebhookResource {
             bulkSchedulerService.handleConfigUpdate(config);
             return Response.ok().build();
         } catch (Exception e) {
-            LOG.error(MessageConstants.ERROR_PROCESSING_CONFIG_UPDATE_WEBHOOK, e);
+            LOG.errorf("%s: %s", MessageConstants.ERROR_PROCESSING_CONFIG_UPDATE_WEBHOOK, e.getMessage());
             return Response.serverError()
                     .entity(String.format(MessageConstants.ERROR_PROCESSING_CONFIG_UPDATE_WEBHOOK_WITH_MESSAGE, e.getMessage()))
                     .build();

@@ -76,7 +76,7 @@ public class BulkSchedulerService {
             initialized = true;
             LOG.info(MessageConstants.INFO_BULK_SCHEDULER_INITIALIZED);
         } catch (Exception e) {
-            LOG.error(MessageConstants.ERROR_FAILED_TO_INITIALIZE_BULK_SCHEDULER, e);
+            LOG.errorf("%s: %s", MessageConstants.ERROR_FAILED_TO_INITIALIZE_BULK_SCHEDULER, e.getMessage());
         }
     }
 

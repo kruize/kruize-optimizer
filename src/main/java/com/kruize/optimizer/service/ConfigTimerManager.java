@@ -84,7 +84,7 @@ public class ConfigTimerManager {
                     config.getRecommendationSettings().getScheduling()
             );
         } catch (RuntimeException e) {
-            LOG.errorf(e, "Cannot schedule config '%s': invalid scheduling", configName);
+            LOG.errorf("Cannot schedule config '%s': invalid scheduling: %s", configName, e.getMessage());
             return;
         }
         if (!isPositiveInterval(interval)) {
@@ -107,9 +107,8 @@ public class ConfigTimerManager {
                         try {
                             executeConfigJob(config);
                         } catch (Throwable t) {
-                            LOG.errorf(t,
-                                    "Unexpected error executing bulk job for config '%s'; timer will continue",
-                                    config.getConfigName());
+                            LOG.errorf("Unexpected error executing bulk job for config '%s'; timer will continue: %s",
+                                    config.getConfigName(), t.getMessage());
                         }
                     },
                     delay,
@@ -117,7 +116,7 @@ public class ConfigTimerManager {
                     TimeUnit.MILLISECONDS
             );
         } catch (RuntimeException e) {
-            LOG.errorf(e, "Failed to schedule config '%s'; existing timer left unchanged", configName);
+            LOG.errorf("Failed to schedule config '%s'; existing timer left unchanged: %s", configName, e.getMessage());
             return;
         }
 
@@ -169,7 +168,7 @@ public class ConfigTimerManager {
                     updatedConfig.getRecommendationSettings().getScheduling()
             );
         } catch (RuntimeException e) {
-            LOG.errorf(e, "Cannot update timer for config '%s': invalid scheduling", configName);
+            LOG.errorf("Cannot update timer for config '%s': invalid scheduling: %s", configName, e.getMessage());
             return;
         }
         if (!isPositiveInterval(newInterval)) {
@@ -234,8 +233,8 @@ public class ConfigTimerManager {
             jobsService.incrementJobsTriggered(config.getConfigName());
 
         } catch (Exception e) {
-            LOG.errorf(e, "Failed to execute bulk job for config '%s'",
-                    config.getConfigName());
+            LOG.errorf("Failed to execute bulk job for config '%s': %s",
+                    config.getConfigName(), e.getMessage());
         }
     }
 
@@ -256,8 +255,8 @@ public class ConfigTimerManager {
                 scheduleConfig(config);
             } catch (Exception e) {
                 String configName = config != null ? config.getConfigName() : null;
-                LOG.errorf(e, "Failed to schedule config '%s'; continuing with remaining configs",
-                        configName);
+                LOG.errorf("Failed to schedule config '%s'; continuing with remaining configs: %s",
+                        configName, e.getMessage());
             }
         }
 

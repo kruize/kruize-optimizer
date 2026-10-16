@@ -14,7 +14,12 @@ quarkus:
 # Kruize client configuration for tests (mocked in tests)
 kruize:
   url: http://kruize:8080
-  
+
+  # Disable startup initialization during tests to prevent
+  # connection errors when Kruize service is not available
+  startup:
+    initialize: false
+
   # Default configuration values
   defaults:
     datasource: prometheus-1
