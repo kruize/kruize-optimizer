@@ -15,28 +15,23 @@
  *******************************************************************************/
 package com.kruize.optimizer.service;
 
-import com.kruize.optimizer.client.KruizeClient;
-import com.kruize.optimizer.util.MockResponseLoader;
+import com.kruize.optimizer.model.WebhookPayload;
+import com.kruize.optimizer.utils.OptimizerConstants.WebhookConstants;
+import io.quarkus.arc.ClientProxy;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
-import java.io.IOException;
-import java.util.Map;
-import java.util.Optional;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 /**
- * Unit tests for BulkSchedulerService
+ * Unit tests for BulkSchedulerService (config-timer orchestration).
  */
 @QuarkusTest
 class BulkSchedulerServiceTest {
@@ -44,9 +39,7 @@ class BulkSchedulerServiceTest {
     @Inject
     BulkSchedulerService bulkSchedulerService;
 
-    @InjectMock
-    @RestClient
-    KruizeClient kruizeClient;
+    private BulkSchedulerService scheduler;
 
     @InjectMock
     KruizeStateService kruizeStateService;
@@ -54,281 +47,104 @@ class BulkSchedulerServiceTest {
     @InjectMock
     JobsService jobsService;
 
-    @ConfigProperty(name = "kruize.bulk.scheduler.measurement-duration")
-    String measurementDuration;
-
-    @ConfigProperty(name = "kruize.webhook.url")
-    String webhookUrl;
-
-    @ConfigProperty(name = "kruize.target.labels.json")
-    String targetLabelsJson;
-
-    private String mockBulkApiResponse;
+    @InjectMock
+    ConfigTimerManager configTimerManager;
 
     @BeforeEach
-    void setUp() throws IOException {
-        Mockito.reset(kruizeClient, kruizeStateService, jobsService);
-
-        // Load mock response from JSON file
-        mockBulkApiResponse = MockResponseLoader.loadMockResponseAsString("bulk_api_response.json");
-
-        // Mock the initialization methods
+    void setUp() {
+        scheduler = ClientProxy.unwrap(bulkSchedulerService);
+        Mockito.reset(kruizeStateService, jobsService, configTimerManager);
+        scheduler.completedJobs.clear();
+        scheduler.completedJobIdLimit = BulkSchedulerService.DEFAULT_COMPLETED_JOB_ID_LIMIT;
+        scheduler.initialized = false;
         doNothing().when(kruizeStateService).refreshStateAndInstallProfiles();
+        doNothing().when(configTimerManager).initializeConfigs();
     }
 
     /**
-     * Test successful scheduled bulk API call
-     *
-     * Test Description: Verifies that the scheduled bulk API call successfully executes
-     * when all required resources (datasource, profiles) are available.
-     *
-     * Mock Response (from bulk_api_response.json):
-     * - Kruize returns: {"job_id": "c0c1ca84-3aaf-450e-909f-a14a3ad6fef4"}
-     *
-     * Expected Behavior:
-     * - Bulk API called with proper payload structure
-     * - Payload contains: filter, datasource, metadata_profile, measurement_duration
-     * - Jobs counter incremented
-     * - Verifies payload values match configuration
-     */
-    @Test
-    void testScheduledBulkApiCall_Success() {
-        // Arrange
-        when(kruizeStateService.isCacheEmpty()).thenReturn(false);
-        when(kruizeStateService.getDefaultDatasourceName()).thenReturn(Optional.of("prometheus-1"));
-        when(kruizeStateService.getDefaultMetadataProfileName()).thenReturn(Optional.of("cluster-metadata-local-monitoring"));
-        when(kruizeStateService.getDefaultMetricProfileName()).thenReturn(Optional.of("resource-optimization-local-monitoring"));
-        when(kruizeClient.bulkCreateExperiments(any())).thenReturn(mockBulkApiResponse);
-        doNothing().when(jobsService).incrementJobsTriggered();
-
-        // Act
-        bulkSchedulerService.initialize();
-        bulkSchedulerService.scheduledBulkApiCall();
-
-        // Assert
-        verify(kruizeClient, times(1)).bulkCreateExperiments(any());
-        verify(jobsService, times(1)).incrementJobsTriggered();
-
-        // Verify the payload structure
-        ArgumentCaptor<Map<String, Object>> payloadCaptor = ArgumentCaptor.forClass(Map.class);
-        verify(kruizeClient).bulkCreateExperiments(payloadCaptor.capture());
-        Map<String, Object> payload = payloadCaptor.getValue();
-
-        assertNotNull(payload);
-        assertTrue(payload.containsKey("filter"));
-        assertTrue(payload.containsKey("datasource"));
-        assertTrue(payload.containsKey("metadata_profile"));
-        assertTrue(payload.containsKey("measurement_duration"));
-        assertEquals("prometheus-1", payload.get("datasource"));
-        assertEquals("cluster-metadata-local-monitoring", payload.get("metadata_profile"));
-        assertEquals(measurementDuration, payload.get("measurement_duration"));
-    }
-
-    /**
-     * Test scheduled bulk API call when service is not initialized
-     *
-     * Test Description: Verifies that the scheduled bulk API call does not execute
-     * if the service has not been initialized.
-     *
-     * Expected Behavior:
-     * - Bulk API not called
-     * - Jobs counter not incremented
-     */
-    @Test
-    void testScheduledBulkApiCall_NotInitialized() {
-        // Act - Call without initialization
-        bulkSchedulerService.scheduledBulkApiCall();
-
-        // Assert - Should not call bulk API
-        verify(kruizeClient, never()).bulkCreateExperiments(any());
-        verify(jobsService, never()).incrementJobsTriggered();
-    }
-
-    /**
-     * Test scheduled bulk API call when no datasource is available
-     *
-     * Test Description: Verifies that the scheduled bulk API call does not execute
-     * when no datasource is configured in Kruize.
-     *
-     * Expected Behavior:
-     * - Bulk API not called
-     * - Jobs counter not incremented
-     * - Service logs error about missing datasource
-     */
-    @Test
-    void testScheduledBulkApiCall_NoDatasource() {
-        // Arrange
-        when(kruizeStateService.isCacheEmpty()).thenReturn(false);
-        when(kruizeStateService.getDefaultDatasourceName()).thenReturn(Optional.empty());
-
-        // Act
-        bulkSchedulerService.initialize();
-        bulkSchedulerService.scheduledBulkApiCall();
-
-        // Assert - Should not call bulk API
-        verify(kruizeClient, never()).bulkCreateExperiments(any());
-        verify(jobsService, never()).incrementJobsTriggered();
-    }
-
-    /**
-     * Test scheduled bulk API call when no metadata profile is available
-     *
-     * Test Description: Verifies that the scheduled bulk API call does not execute
-     * when no metadata profile is configured in Kruize.
-     *
-     * Expected Behavior:
-     * - Bulk API not called
-     * - Jobs counter not incremented
-     * - Service logs error about missing metadata profile
-     */
-    @Test
-    void testScheduledBulkApiCall_NoMetadataProfile() {
-        // Arrange
-        when(kruizeStateService.isCacheEmpty()).thenReturn(false);
-        when(kruizeStateService.getDefaultDatasourceName()).thenReturn(Optional.of("prometheus-1"));
-        when(kruizeStateService.getDefaultMetadataProfileName()).thenReturn(Optional.empty());
-
-        // Act
-        bulkSchedulerService.initialize();
-        bulkSchedulerService.scheduledBulkApiCall();
-
-        // Assert - Should not call bulk API
-        verify(kruizeClient, never()).bulkCreateExperiments(any());
-        verify(jobsService, never()).incrementJobsTriggered();
-    }
-
-    /**
-     * Test scheduled bulk API call when no metric profile is available
-     *
-     * Test Description: Verifies that the scheduled bulk API call does not execute
-     * when no metric profile is configured in Kruize.
-     *
-     * Expected Behavior:
-     * - Bulk API not called
-     * - Jobs counter not incremented
-     * - Service logs error about missing metric profile
-     */
-    @Test
-    void testScheduledBulkApiCall_NoMetricProfile() {
-        // Arrange
-        when(kruizeStateService.isCacheEmpty()).thenReturn(false);
-        when(kruizeStateService.getDefaultDatasourceName()).thenReturn(Optional.of("prometheus-1"));
-        when(kruizeStateService.getDefaultMetadataProfileName()).thenReturn(Optional.of("cluster-metadata-local-monitoring"));
-        when(kruizeStateService.getDefaultMetricProfileName()).thenReturn(Optional.empty());
-
-        // Act
-        bulkSchedulerService.initialize();
-        bulkSchedulerService.scheduledBulkApiCall();
-
-        // Assert - Should not call bulk API
-        verify(kruizeClient, never()).bulkCreateExperiments(any());
-        verify(jobsService, never()).incrementJobsTriggered();
-    }
-
-    /**
-     * Test scheduled bulk API call with empty cache that triggers refresh
-     *
-     * Test Description: Verifies that when the state cache is empty, the service
-     * automatically refreshes the state before making the bulk API call.
-     *
-     * Expected Behavior:
-     * - State cache refresh triggered
-     * - Bulk API called successfully after refresh
-     * - Jobs counter incremented
-     */
-    @Test
-    void testScheduledBulkApiCall_CacheEmptyRefreshes() {
-        // Arrange
-        when(kruizeStateService.isCacheEmpty()).thenReturn(true);
-        doNothing().when(kruizeStateService).refreshState();
-        when(kruizeStateService.getDefaultDatasourceName()).thenReturn(Optional.of("prometheus-1"));
-        when(kruizeStateService.getDefaultMetadataProfileName()).thenReturn(Optional.of("cluster-metadata-local-monitoring"));
-        when(kruizeStateService.getDefaultMetricProfileName()).thenReturn(Optional.of("resource-optimization-local-monitoring"));
-        when(kruizeClient.bulkCreateExperiments(any())).thenReturn(mockBulkApiResponse);
-        doNothing().when(jobsService).incrementJobsTriggered();
-
-        // Act
-        bulkSchedulerService.initialize();
-        bulkSchedulerService.scheduledBulkApiCall();
-
-        // Assert
-        verify(kruizeStateService, times(1)).refreshState();
-        verify(kruizeClient, times(1)).bulkCreateExperiments(any());
-        verify(jobsService, times(1)).incrementJobsTriggered();
-    }
-
-    /**
-     * Test scheduled bulk API call exception handling
-     *
-     * Test Description: Verifies that when the Kruize bulk API throws an exception,
-     * the service handles it gracefully without crashing the scheduler.
-     *
-     * Expected Behavior:
-     * - Exception caught and logged
-     * - Jobs counter not incremented (since call failed)
-     * - Scheduler continues to run for next iteration
-     */
-    @Test
-    void testScheduledBulkApiCall_ExceptionHandling() {
-        // Arrange
-        when(kruizeStateService.isCacheEmpty()).thenReturn(false);
-        when(kruizeStateService.getDefaultDatasourceName()).thenReturn(Optional.of("prometheus-1"));
-        when(kruizeStateService.getDefaultMetadataProfileName()).thenReturn(Optional.of("cluster-metadata-local-monitoring"));
-        when(kruizeStateService.getDefaultMetricProfileName()).thenReturn(Optional.of("resource-optimization-local-monitoring"));
-        when(kruizeClient.bulkCreateExperiments(any())).thenThrow(new RuntimeException("API error"));
-
-        // Act
-        bulkSchedulerService.initialize();
-        bulkSchedulerService.scheduledBulkApiCall();
-
-        // Assert - Should handle exception gracefully
-        verify(kruizeClient, times(1)).bulkCreateExperiments(any());
-        verify(jobsService, never()).incrementJobsTriggered();
-    }
-
-    /**
-     * Test successful service initialization
-     *
-     * Test Description: Verifies that the BulkSchedulerService initializes correctly
-     * by refreshing state and installing missing profiles.
-     *
-     * Expected Behavior:
-     * - KruizeStateService.refreshStateAndInstallProfiles() called once
-     * - Service marked as initialized
+     * Verifies initialize refreshes state/profiles and starts config timers.
      */
     @Test
     void testInitialize_Success() {
-        // Arrange
-        doNothing().when(kruizeStateService).refreshStateAndInstallProfiles();
+        scheduler.initialize();
 
-        // Act
-        bulkSchedulerService.initialize();
-
-        // Assert
         verify(kruizeStateService, times(1)).refreshStateAndInstallProfiles();
+        verify(configTimerManager, times(1)).initializeConfigs();
+        assertTrue(scheduler.isInitialized());
     }
 
     /**
-     * Test service initialization exception handling
-     *
-     * Test Description: Verifies that if initialization fails due to an exception,
-     * the service handles it gracefully without crashing the application.
-     *
-     * Expected Behavior:
-     * - Exception caught and logged
-     * - Application continues to run
-     * - Service remains uninitialized (scheduled calls will be skipped)
+     * Verifies initialize failures are swallowed so startup continues.
      */
     @Test
     void testInitialize_ExceptionHandling() {
-        // Arrange
-        doThrow(new RuntimeException("Initialization error")).when(kruizeStateService).refreshStateAndInstallProfiles();
+        doThrow(new RuntimeException("Initialization error"))
+                .when(kruizeStateService).refreshStateAndInstallProfiles();
 
-        // Act - Should not throw exception
-        assertDoesNotThrow(() -> bulkSchedulerService.initialize());
-
-        // Assert
+        assertDoesNotThrow(() -> scheduler.initialize());
         verify(kruizeStateService, times(1)).refreshStateAndInstallProfiles();
+        verify(configTimerManager, never()).initializeConfigs();
+        assertFalse(scheduler.isInitialized());
+    }
+
+    /**
+     * Verifies config timers are still attempted when refresh succeeds.
+     */
+    @Test
+    void testInitialize_StartsConfigTimers() {
+        scheduler.initialize();
+
+        verify(configTimerManager, times(1)).initializeConfigs();
+    }
+
+    /**
+     * A failure to load configs must not mark the scheduler initialized.
+     */
+    @Test
+    void testInitialize_ConfigFetchFailureLeavesUninitialized() {
+        doThrow(new IllegalStateException("Kruize unreachable"))
+                .when(configTimerManager).initializeConfigs();
+
+        assertDoesNotThrow(() -> scheduler.initialize());
+        assertFalse(scheduler.isInitialized());
+    }
+
+    @Test
+    void handleWebhookAppliesCompletedJobOnce() {
+        WebhookPayload payload = completedJob("job-1");
+
+        scheduler.handleWebhook(List.of(payload));
+        scheduler.handleWebhook(List.of(payload));
+
+        verify(jobsService, times(1)).updateExperimentCounters(3, 2, 1);
+    }
+
+    @Test
+    void handleWebhookDropsOldestJobIdBeyondLimit() {
+        scheduler.completedJobIdLimit = 2;
+
+        scheduler.handleWebhook(List.of(completedJob("a")));
+        scheduler.handleWebhook(List.of(completedJob("b")));
+        scheduler.handleWebhook(List.of(completedJob("b")));
+        verify(jobsService, times(2)).updateExperimentCounters(3, 2, 1);
+
+        scheduler.handleWebhook(List.of(completedJob("c")));
+        scheduler.handleWebhook(List.of(completedJob("b")));
+        verify(jobsService, times(3)).updateExperimentCounters(3, 2, 1);
+
+        scheduler.handleWebhook(List.of(completedJob("a")));
+        verify(jobsService, times(4)).updateExperimentCounters(3, 2, 1);
+    }
+
+    private static WebhookPayload completedJob(String jobId) {
+        WebhookPayload.Summary summary = new WebhookPayload.Summary();
+        summary.setJobId(jobId);
+        summary.setStatus(WebhookConstants.STATUS_COMPLETED);
+        summary.setTotalExperiments(3);
+        summary.setProcessedExperiments(2);
+        summary.setExistingExperiments(1);
+        WebhookPayload payload = new WebhookPayload();
+        payload.setSummary(summary);
+        return payload;
     }
 }
-
