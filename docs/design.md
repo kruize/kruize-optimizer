@@ -20,6 +20,7 @@ Kruize Optimizer is a cloud-native optimization service designed to provide supp
 
 - **Automatic Experiment Creation**: Automatically create experiments in Kruize based on user-defined labels.
 - **Profile Management Support**: Manages and installs missing profiles in Kruize.
+- **Config-Driven Scheduling**: Per-config bulk job scheduling via BulkConfig objects fetched from Kruize, with runtime updates through webhooks.
 - **Webhook Integration**: Event-driven architecture for real-time updates
 
 ## Architecture
@@ -79,8 +80,7 @@ graph TB
 The resource layer handles HTTP requests and provides RESTful endpoints.
 
 **Key Resources:**
-- [`WebhookResource`](../src/main/java/com/kruize/optimizer/resource/WebhookResource.java) - Processes webhook events
-> NOTE: The following APIs are available only in version 0.0.1. Users migrating to versions >0.0.1 should note that these APIs are no longer supported or present in the codebase.
+- [`WebhookResource`](../src/main/java/com/kruize/optimizer/resource/WebhookResource.java) - Processes webhook events (`POST /webhook`, `POST /webhook/config/bulk`)
 - [`DatasourceResource`](../src/main/java/com/kruize/optimizer/resource/DatasourceResource.java) - Manages datasource operations
 - [`JobsResource`](../src/main/java/com/kruize/optimizer/resource/JobsResource.java) - Handles optimization job operations
 - [`MetadataProfileResource`](../src/main/java/com/kruize/optimizer/resource/MetadataProfileResource.java) - Manages metadata profiles
@@ -93,18 +93,23 @@ The resource layer handles HTTP requests and provides RESTful endpoints.
 The service layer contains business logic and orchestrates operations.
 
 **Key Services:**
+- [`BulkSchedulerService`](../src/main/java/com/kruize/optimizer/service/BulkSchedulerService.java) - Orchestrates startup initialization, handles webhook callbacks
+- [`BulkConfigService`](../src/main/java/com/kruize/optimizer/service/BulkConfigService.java) - Fetches enabled bulk configs from Kruize, converts them to bulk job requests, parses scheduling strings
+- [`ConfigTimerManager`](../src/main/java/com/kruize/optimizer/service/ConfigTimerManager.java) - Manages per-config scheduled timers for periodic bulk job execution
+- [`KruizeStateService`](../src/main/java/com/kruize/optimizer/service/KruizeStateService.java) - Caches Kruize state (datasources, profiles, layers) with periodic refresh
+- [`ProfileService`](../src/main/java/com/kruize/optimizer/service/ProfileService.java) - Profile management (install/list metadata, metric, layer, and bulk config profiles)
 - [`DatasourceService`](../src/main/java/com/kruize/optimizer/service/DatasourceService.java) - Datasource management logic
-- [`JobsService`](../src/main/java/com/kruize/optimizer/service/JobsService.java) - Job processing and management
-- [`BulkSchedulerService`](../src/main/java/com/kruize/optimizer/service/BulkSchedulerService.java) - Bulk operation scheduling
-- [`ProfileService`](../src/main/java/com/kruize/optimizer/service/ProfileService.java) - Profile management
-- [`KruizeStateService`](../src/main/java/com/kruize/optimizer/service/KruizeStateService.java) - Application state management
-- [`StatusService`](../src/main/java/com/kruize/optimizer/service/StatusService.java) - Status information provider
+- [`JobsService`](../src/main/java/com/kruize/optimizer/service/JobsService.java) - Tracks bulk job and experiment counters
+- [`StatusService`](../src/main/java/com/kruize/optimizer/service/StatusService.java) - Aggregates system status information
 
 ### 3. Model Layer
 
 Domain models representing core entities.
 
 **Key Models:**
+- [`BulkConfig`](../src/main/java/com/kruize/optimizer/model/kruize/BulkConfig.java) - Bulk configuration with scheduling, filters, and experiment settings
+- [`RecommendationSettings`](../src/main/java/com/kruize/optimizer/model/kruize/RecommendationSettings.java) - Recommendation settings (scheduling, terms, models)
+- [`TrialSettings`](../src/main/java/com/kruize/optimizer/model/kruize/TrialSettings.java) - Trial settings (measurement_duration)
 - [`Datasource`](../src/main/java/com/kruize/optimizer/model/kruize/Datasource.java) - Datasource configuration
 - [`JobsOverview`](../src/main/java/com/kruize/optimizer/model/kruize/JobsOverview.java) - Job information
 - [`KruizeProfile`](../src/main/java/com/kruize/optimizer/model/kruize/KruizeProfile.java) - Profile definitions
@@ -127,6 +132,8 @@ Profile-based configuration for flexibility and extensibility.
   - [`cluster-metadata-local-monitoring.json`](../src/main/resources/configs/v1.0/metadata-profiles/cluster-metadata-local-monitoring.json) - Cluster metadata profile
 - **Metric Profiles**: Specify metrics to collect and analyze
   - [`resource-optimization-local-monitoring.json`](../src/main/resources/configs/v1.0/metric-profiles/resource-optimization-local-monitoring.json) - Resource optimization metric profile
+- **Bulk Configs**: Define per-config scheduling, filtering, and experiment creation settings
+  - [`default-bulk-config.json`](../src/main/resources/configs/v1.0/bulk-configs/default-bulk-config.json) - Default bulk config
 - **Layer Configurations**: Container, JVM, and framework-specific settings
 
 **Configuration Files:**
@@ -164,58 +171,76 @@ The service is designed to be stateless where possible:
 
 ## Data Flow
 
+### Startup Flow
+
+```
+1. Startup.onStart() fires on application start
+   ↓
+2. BulkSchedulerService.initialize() called
+   ↓
+3. KruizeStateService.refreshStateAndInstallProfiles()
+   → Refreshes cached state (datasources, profiles, layers)
+   → Installs missing profiles (metadata, metric, layer, bulk config)
+   ↓
+4. ConfigTimerManager.initializeConfigs()
+   → Fetches enabled BulkConfigs from Kruize
+   → Schedules a per-config timer for each based on its scheduling interval
+   ↓
+5. Optimizer is ready
+```
+
 ### Optimizer Job Flow
 
 ```
 1. User installs Kruize and Optimizer
    ↓
-2. Optimizer installs missing profiles (periodically)
+2. Optimizer installs missing profiles on startup (and periodically)
    ↓
 3. User labels their workloads
    ↓
-4. Optimizer creates bulk experiments for labelled workloads (periodically)
+4. Per-config timer fires: BulkConfigService converts config to bulk job request
    ↓
-5. Kruize generated recommendations for created experiments
+5. Bulk job submitted to Kruize via KruizeClient
    ↓
-6. Recommendations generated
+6. Kruize generates recommendations for created experiments
    ↓
 7. Results stored in Kruize DB
    ↓
-8. Bulk Job Response returned to Optimizer 
+8. Kruize sends webhook callback to Optimizer
    ↓
-9. Optimizer receives results and updated summary
+9. Optimizer updates job/experiment counters via JobsService
    ↓
 10. Users view recommendations on Kruize UI
-```
-
-### Webhook Event Flow
-
-```
-1. External system sends webhook
-   ↓
-2. WebhookResource receives payload
-   ↓
-3. Payload validated and parsed
-   ↓
-4. Event processed by service layer
-   ↓
-5. State updated if needed
 ```
 
 ### Bulk Operation Flow
 
 ```
-1. Bulk request triggered (periodically)
+1. ConfigTimerManager fires per-config timer
    ↓
-2. BulkSchedulerService creates operations
+2. BulkConfigService converts BulkConfig to bulk job request
+   (applies filters: namespaces, labels, experiment types, datasource)
    ↓
-3. Operations processed by Kruize
+3. Bulk job submitted to Kruize via KruizeClient
    ↓
-4. Progress tracked
+4. Kruize processes experiments
    ↓
-5. Results received via webhook
+5. Results received via webhook callback (POST /webhook)
    ↓
-6. Summary updated
+6. JobsService updates experiment counters
+```
+
+### Config Update Flow
+
+```
+1. Kruize sends config update to POST /webhook/config/bulk
+   ↓
+2. WebhookResource validates config_name and passes to BulkSchedulerService
+   ↓
+3. ConfigTimerManager.updateConfigTimer() evaluates the change:
+   → Config enabled with new schedule: timer created or rescheduled
+   → Config disabled: existing timer canceled
+   → Schedule shortened: next job executes immediately
 ```
 
 ## Technology Stack
@@ -242,4 +267,4 @@ The service is designed to be stateless where possible:
 
 ---
 
-**Last Updated**: 2026-05-05
+**Last Updated**: 2026-10-25

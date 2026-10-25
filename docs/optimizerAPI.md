@@ -11,7 +11,12 @@ Complete API documentation for Kruize Optimizer REST endpoints.
 - [Error Handling](#error-handling)
 - [API Endpoints](#api-endpoints)
   - [Webhook API](#webhook-api)
-- [Examples](#examples)
+  - [Datasource API](#datasource-api)
+  - [Jobs API](#jobs-api)
+  - [Metadata Profile API](#metadata-profile-api)
+  - [Metric Profile API](#metric-profile-api)
+  - [Layer API](#layer-api)
+  - [Status API](#status-api)
 
 ## Base URL
 
@@ -127,10 +132,6 @@ All API responses follow a consistent JSON format:
 - `500 Internal Server Error` - Server error
 
 ## API Endpoints
-
-**Note**: The Kruize Optimizer service primarily provides the webhook endpoint for receiving bulk API callbacks. For complete API documentation of Kruize endpoints (datasources, jobs, profiles, layers, status), please refer to the Kruize service documentation. (https://github.com/kruize/autotune/tree/master/design). All other endpoints currently exposed in optimizer will be removed in next release. 
-
----
 
 ### Webhook API
 
@@ -266,6 +267,283 @@ The webhook URL is configured via the `KRUIZE_WEBHOOK_URL` environment variable 
 
 ---
 
+#### Receive Config Update
+
+Receive bulk config update notifications from Kruize, allowing the scheduler to adjust per-config timers without requiring a restart.
+
+**Endpoint:** `POST /webhook/config/bulk`
+
+**Request Body:**
+
+A single BulkConfig object with at minimum a `config_name` field.
+
+```json
+{
+  "config_name": "my-config",
+  "cluster_name": "production",
+  "datasources": ["prometheus-1"],
+  "namespaces": ["default", "app-ns"],
+  "labels": {"kruize/autotune": "enabled"},
+  "experiment_types": ["container", "namespace"],
+  "metadata_profile": "cluster-metadata-local-monitoring",
+  "recommendation_settings": {
+    "scheduling": "24h",
+    "terms": ["short_term"],
+    "models": ["cost"]
+  },
+  "trial_settings": {
+    "measurement_duration": "15min"
+  },
+  "enabled": true
+}
+```
+
+**Response:**
+
+- **200 OK** - Config update processed successfully
+- **400 Bad Request** - `config_name` is null or empty
+- **500 Internal Server Error** - Processing error
+
+**Behavior:**
+
+- If the config is **enabled** and has a valid `scheduling` value, the timer is created or updated
+- If the config is **disabled** (`enabled: false`), any existing timer for that config is canceled
+- If the scheduling interval is shortened, the next job executes immediately
+
+**Example:**
+
+```bash
+curl -X POST http://localhost:8080/webhook/config/bulk \
+  -H "Content-Type: application/json" \
+  -d '{
+    "config_name": "my-config",
+    "recommendation_settings": {
+      "scheduling": "12h"
+    },
+    "enabled": true
+  }'
+```
+
+---
+
+### Datasource API
+
+#### List Datasources
+
+Retrieves the list of configured datasources from Kruize.
+
+**Endpoint:** `GET /kruize/datasources/list`
+
+**Response (200 OK):**
+
+```json
+[
+  {
+    "name": "prometheus-1",
+    "provider": "prometheus",
+    "url": "http://prometheus:9090",
+    "service_name": "prometheus",
+    "namespace": "monitoring"
+  }
+]
+```
+
+**Example:**
+
+```bash
+curl http://localhost:8080/kruize/datasources/list
+```
+
+---
+
+### Jobs API
+
+#### Jobs Overview
+
+Returns bulk job statistics tracked by the Optimizer.
+
+**Endpoint:** `GET /jobs/overview`
+
+**Response (200 OK):**
+
+```json
+{
+  "jobs_triggered": 42,
+  "total_experiments": 500,
+  "processed_experiments": 480,
+  "unique_experiments": 120
+}
+```
+
+**Example:**
+
+```bash
+curl http://localhost:8080/jobs/overview
+```
+
+---
+
+### Metadata Profile API
+
+#### List Metadata Profiles
+
+Retrieves metadata profiles from Kruize.
+
+**Endpoint:** `GET /kruize/metadataProfiles/list`
+
+**Response (200 OK):**
+
+```json
+[
+  {
+    "name": "cluster-metadata-local-monitoring",
+    "profile_version": 1.0
+  }
+]
+```
+
+**Example:**
+
+```bash
+curl http://localhost:8080/kruize/metadataProfiles/list
+```
+
+#### Install Metadata Profiles
+
+Installs missing metadata profiles from the Optimizer's local config into Kruize.
+
+**Endpoint:** `POST /kruize/metadataProfiles/install`
+
+**Response (200 OK):**
+
+```json
+{
+  "status": "success",
+  "message": "Missing metadata profiles installed"
+}
+```
+
+---
+
+### Metric Profile API
+
+#### List Metric Profiles
+
+Retrieves metric profiles from Kruize.
+
+**Endpoint:** `GET /kruize/metricProfiles/list`
+
+**Response (200 OK):**
+
+```json
+[
+  {
+    "name": "resource-optimization-local-monitoring",
+    "profile_version": 1.0
+  }
+]
+```
+
+**Example:**
+
+```bash
+curl http://localhost:8080/kruize/metricProfiles/list
+```
+
+#### Install Metric Profiles
+
+Installs missing metric profiles from the Optimizer's local config into Kruize.
+
+**Endpoint:** `POST /kruize/metricProfiles/install`
+
+**Response (200 OK):**
+
+```json
+{
+  "status": "success",
+  "message": "Missing metric profiles installed"
+}
+```
+
+---
+
+### Layer API
+
+#### List Layers
+
+Retrieves layer configurations from Kruize.
+
+**Endpoint:** `GET /kruize/layers/list`
+
+**Response (200 OK):**
+
+```json
+[
+  {
+    "name": "container"
+  },
+  {
+    "name": "hotspot"
+  }
+]
+```
+
+**Example:**
+
+```bash
+curl http://localhost:8080/kruize/layers/list
+```
+
+#### Install Layers
+
+Installs missing layer configurations from the Optimizer's local config into Kruize.
+
+**Endpoint:** `POST /kruize/layers/install`
+
+**Response (200 OK):**
+
+```json
+{
+  "status": "success",
+  "message": "Missing layers installed"
+}
+```
+
+---
+
+### Status API
+
+#### System Status
+
+Returns the aggregated system status including datasources, profiles, layers, and alerts.
+
+**Endpoint:** `GET /kruize/status`
+
+**Response (200 OK):**
+
+```json
+{
+  "datasources": {
+    "count": 1,
+    "available": true
+  },
+  "profiles": {
+    "metadata": 1,
+    "metric": 1,
+    "layers": 4
+  },
+  "alerts": []
+}
+```
+
+**Example:**
+
+```bash
+curl http://localhost:8080/kruize/status
+```
+
+---
+
 ## Support
 
 For API support and questions:
@@ -274,4 +552,4 @@ For API support and questions:
 
 ---
 
-**Last Updated**: 2026-05-05
+**Last Updated**: 2026-10-25

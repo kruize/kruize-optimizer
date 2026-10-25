@@ -33,13 +33,18 @@ The primary configuration file is located at [`src/main/resources/application.ym
 # HTTP Server Configuration
 quarkus:
   application:
-    name: kruize-optimizer
-    
+    name: kruize-optimizer-service
+    version: 1.0.0
+
+  # OpenAPI Configuration
+  smallrye-openapi:
+    path: /openapi
+
   # Swagger UI Configuration
   swagger-ui:
     path: /swagger-ui
     always-include: ${ENABLE_SWAGGER:false}
-    
+
   # Logging Configuration
   log:
     console:
@@ -47,32 +52,42 @@ quarkus:
         enabled: false
         pretty-print: false
 
+  # REST Client Configuration
+  rest-client:
+    "com.kruize.optimizer.client.KruizeClient":
+      url: ${kruize.url}
+
 # Kruize Optimizer Configuration
 kruize:
   # URL of the Kruize Autotune service
   url: ${KRUIZE_URL:http://kruize:8080}
-  
+
+  # Startup initialization (set to false to skip auto-initialization)
+  startup:
+    initialize: true
+
   state:
     refresh:
+      # Interval to refresh state and install missing profiles
       interval: ${KRUIZE_STATE_REFRESH_INTERVAL:60m}
-  
-  bulk:
-    scheduler:
-      interval: ${KRUIZE_BULK_SCHEDULER_INTERVAL:15m}
-      startup-delay: ${KRUIZE_BULK_SCHEDULER_STARTUP_DELAY:1m}
-      measurement-duration: ${KRUIZE_BULK_MEASUREMENT_DURATION:15min}
-  
+
   webhook:
+    # Webhook URL for bulk API callbacks
     url: ${KRUIZE_WEBHOOK_URL:http://kruize-optimizer:8080/webhook}
-  
+
   target:
     labels:
+      # Max number of labels to process
       limit: ${KRUIZE_TARGET_LABEL_LIMIT:1}
+      # Pass labels as a JSON String (Object or Array of "key=value")
       json: ${KRUIZE_TARGET_LABELS}
-  
+
   defaults:
+    # Default datasource name
     datasource: ${KRUIZE_DEFAULT_DATASOURCE:prometheus-1}
+    # Default metadata profile name
     metadata-profile: ${KRUIZE_DEFAULT_METADATA_PROFILE:cluster-metadata-local-monitoring}
+    # Default metric profile name
     metric-profile: ${KRUIZE_DEFAULT_METRIC_PROFILE:resource-optimization-local-monitoring}
 ```
 
@@ -92,8 +107,8 @@ kruize:
 # Override Kruize URL
 export KRUIZE_URL=http://kruize-service.monitoring:8080
 
-# Override bulk scheduler interval
-export KRUIZE_BULK_SCHEDULER_INTERVAL=30m
+# Override state refresh interval
+export KRUIZE_STATE_REFRESH_INTERVAL=30m
 ```
 
 ## Profile Configuration
@@ -153,6 +168,52 @@ Layer configurations define parameters for different layers (container, JVM, fra
 2. Follow the schema structure from existing layers
 3. Update the [`configsReferenceIndex.json`](../src/main/resources/configs/configsReferenceIndex.json) file
 4. Rebuild the Docker image
+
+## Bulk Config Configuration
+
+Bulk job scheduling is **config-driven** rather than using global environment variables. Each `BulkConfig` object stored in Kruize defines its own scheduling interval, target namespaces, labels, and experiment settings.
+
+### How It Works
+
+1. On startup, `ConfigTimerManager` fetches all enabled `BulkConfig` objects from Kruize via `BulkConfigService`
+2. A per-config timer is created based on each config's `recommendation_settings.scheduling` value
+3. When a timer fires, `BulkConfigService` converts the config into a bulk job request and submits it to Kruize
+4. Configs can be updated at runtime via the `POST /webhook/config/bulk` endpoint without requiring a restart
+
+### Scheduling Format
+
+The `scheduling` field supports human-readable duration strings:
+
+| Format  | Examples                    |
+|---------|-----------------------------|
+| Hours   | `24h`, `1hr`, `2hours`      |
+| Minutes | `15m`, `30min`, `45minutes` |
+| Days    | `1d`, `2day`, `7days`       |
+
+### Local Bulk Config Profiles
+
+Default bulk config profiles are bundled with the application:
+
+**Location**: `src/main/resources/configs/v1.0/bulk-configs/`
+
+These are registered in [`configsReferenceIndex.json`](../src/main/resources/configs/configsReferenceIndex.json) under the `bulk_configs` section and are automatically installed into Kruize on startup if missing.
+
+### BulkConfig Fields
+
+| Field                     | Type     | Description                                               |
+|---------------------------|----------|-----------------------------------------------------------|
+| `config_name`             | string   | Unique name for the config                                |
+| `cluster_name`            | string   | Target cluster name                                       |
+| `datasources`             | string[] | List of datasource names                                  |
+| `namespaces`              | string[] | Target namespaces to filter                               |
+| `labels`                  | object   | Label key-value pairs to filter workloads                 |
+| `experiment_types`        | string[] | Experiment types (e.g., "container", "namespace")         |
+| `metadata_profile`        | string   | Metadata profile name                                     |
+| `performance_profile`     | string   | Performance profile name                                  |
+| `trial_settings`          | object   | Trial settings (`measurement_duration`)                   |
+| `recommendation_settings` | object   | Recommendation settings (`scheduling`, `terms`, `models`) |
+| `webhook_url`             | string   | Webhook URL override                                      |
+| `enabled`                 | boolean  | Whether the config is active                              |
 
 ## Deployment Configuration
 
@@ -280,10 +341,8 @@ All environment variables used in Kruize Optimizer deployment:
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `KRUIZE_URL` | http://kruize:8080 | URL of the Kruize Autotune service |
+| `KRUIZE_STARTUP_INITIALIZE` | true | Enable/disable automatic initialization on startup |
 | `KRUIZE_STATE_REFRESH_INTERVAL` | 60m | Interval to refresh state and install missing profiles |
-| `KRUIZE_BULK_SCHEDULER_INTERVAL` | 15m | Interval to call bulk API (cron format or duration) |
-| `KRUIZE_BULK_SCHEDULER_STARTUP_DELAY` | 1m | Startup delay before first bulk API call |
-| `KRUIZE_BULK_MEASUREMENT_DURATION` | 15min | Measurement duration for bulk API calls |
 | `KRUIZE_WEBHOOK_URL` | http://kruize-optimizer:8080/webhook | Webhook URL for bulk API callbacks |
 | `KRUIZE_TARGET_LABEL_LIMIT` | 1 | Max number of labels to process |
 | `KRUIZE_TARGET_LABELS` | {"kruize/autotune": "enabled"} | Labels as JSON String (Object or Array of "key=value") |
@@ -299,7 +358,7 @@ All environment variables used in Kruize Optimizer deployment:
 env:
 - name: KRUIZE_URL
   value: "http://kruize-service.monitoring:8080"
-- name: KRUIZE_BULK_SCHEDULER_INTERVAL
+- name: KRUIZE_STATE_REFRESH_INTERVAL
   value: "30m"
 - name: KRUIZE_TARGET_LABELS
   value: '{"app": "myapp", "env": "production"}'
@@ -329,4 +388,4 @@ kubectl kustomize deployment/overlays/kind/
 
 ---
 
-**Last Updated**: 2026-05-05
+**Last Updated**: 2026-10-25
