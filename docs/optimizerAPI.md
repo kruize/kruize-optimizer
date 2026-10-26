@@ -283,7 +283,7 @@ A single BulkConfig object with at minimum a `config_name` field.
   "cluster_name": "production",
   "datasources": ["prometheus-1"],
   "namespaces": ["default", "app-ns"],
-  "labels": {"kruize/autotune": "enabled"},
+  "labels": {"ibm.runtimes.monitoring.enabled": "true"},
   "experiment_types": ["container", "namespace"],
   "metadata_profile": "cluster-metadata-local-monitoring",
   "recommendation_settings": {
@@ -303,12 +303,6 @@ A single BulkConfig object with at minimum a `config_name` field.
 - **200 OK** - Config update processed successfully
 - **400 Bad Request** - `config_name` is null or empty
 - **500 Internal Server Error** - Processing error
-
-**Behavior:**
-
-- If the config is **enabled** and has a valid `scheduling` value, the timer is created or updated
-- If the config is **disabled** (`enabled: false`), any existing timer for that config is canceled
-- If the scheduling interval is shortened, the next job executes immediately
 
 **Example:**
 

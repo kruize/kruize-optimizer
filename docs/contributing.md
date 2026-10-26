@@ -88,29 +88,6 @@ The application will start on `http://localhost:8080` with:
 
 **IMPORTANT**: Kruize Optimizer requires Kruize to be already running. See the [Installation Guide - Important Notes](installation.md#important-notes) for detailed information about Kruize dependencies and installation methods.
 
-### IDE Setup
-
-#### IntelliJ IDEA
-
-1. Open the project as a Maven project
-2. Enable annotation processing:
-   - Settings → Build, Execution, Deployment → Compiler → Annotation Processors
-   - Check "Enable annotation processing"
-3. Install Quarkus plugin (optional but recommended)
-
-#### VS Code
-
-1. Install extensions:
-   - Extension Pack for Java
-   - Quarkus Tools
-2. Open the project folder
-3. Maven will auto-import dependencies
-
-#### Eclipse
-
-1. Import as Maven project
-2. Install Quarkus plugin from Eclipse Marketplace
-3. Enable annotation processing in project properties
 
 ## Development Workflow
 

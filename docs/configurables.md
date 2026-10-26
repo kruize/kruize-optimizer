@@ -180,16 +180,6 @@ Bulk job scheduling is **config-driven** rather than using global environment va
 3. When a timer fires, `BulkConfigService` converts the config into a bulk job request and submits it to Kruize
 4. Configs can be updated at runtime via the `POST /webhook/config/bulk` endpoint without requiring a restart
 
-### Scheduling Format
-
-The `scheduling` field supports human-readable duration strings:
-
-| Format  | Examples                    |
-|---------|-----------------------------|
-| Hours   | `24h`, `1hr`, `2hours`      |
-| Minutes | `15m`, `30min`, `45minutes` |
-| Days    | `1d`, `2day`, `7days`       |
-
 ### Local Bulk Config Profiles
 
 Default bulk config profiles are bundled with the application:
@@ -197,6 +187,14 @@ Default bulk config profiles are bundled with the application:
 **Location**: `src/main/resources/configs/v1.0/bulk-configs/`
 
 These are registered in [`configsReferenceIndex.json`](../src/main/resources/configs/configsReferenceIndex.json) under the `bulk_configs` section and are automatically installed into Kruize on startup if missing.
+
+The `recommendation_settings.scheduling` field in each bulk config profile supports human-readable duration strings:
+
+| Format  | Examples                    |
+|---------|-----------------------------|
+| Hours   | `24h`, `1hr`, `2hours`      |
+| Minutes | `15m`, `30min`, `45minutes` |
+| Days    | `1d`, `2day`, `7days`       |
 
 ### BulkConfig Fields
 
@@ -217,111 +215,13 @@ These are registered in [`configsReferenceIndex.json`](../src/main/resources/con
 
 ## Deployment Configuration
 
-### Kubernetes Deployment
+The deployment is managed via Kustomize with environment-specific overlays:
 
-**Base Configuration**: `deployment/base/deployment.yaml`
+- **Base**: [`deployment/base/deployment.yaml`](../deployment/base/deployment.yaml)
+- **Kind overlay**: [`deployment/overlays/kind/`](../deployment/overlays/kind/) — deploys to `monitoring` namespace, uses `prometheus-1` datasource
+- **OpenShift overlay**: [`deployment/overlays/openshift/`](../deployment/overlays/openshift/) — deploys to `openshift-tuning` namespace, uses `thanos-1` datasource
 
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: kruize-optimizer
-spec:
-  replicas: 1                    # Number of replicas
-  selector:
-    matchLabels:
-      app: kruize-optimizer
-  template:
-    metadata:
-      labels:
-        app: kruize-optimizer
-    spec:
-      containers:
-      - name: kruize-optimizer
-        image: quay.io/kruize/kruize-optimizer:0.0.1
-        ports:
-        - containerPort: 8080
-        env:
-        - name: KRUIZE_URL
-          value: "http://kruize:8080"
-        # See Environment Variables section for all available options
-```
-
-### Kustomize Overlays
-
-Overlays allow environment-specific customizations without modifying the base deployment.
-
-#### Kind Overlay
-
-**File**: `deployment/overlays/kind/kustomization.yaml`
-
-The Kind overlay sets the namespace to `monitoring` and configures the default datasource for Prometheus:
-
-```yaml
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-
-namespace: monitoring           # Deploy to monitoring namespace
-
-resources:
-- ../../base
-
-patches:
-  - patch: |-
-      apiVersion: apps/v1
-      kind: Deployment
-      metadata:
-        name: kruize-optimizer
-      spec:
-        template:
-          spec:
-            containers:
-              - name: kruize-optimizer
-                env:
-                  - name: KRUIZE_DEFAULT_DATASOURCE
-                    value: "prometheus-1"
-    target:
-      kind: Deployment
-      name: kruize-optimizer
-```
-
-#### OpenShift Overlay
-
-**File**: `deployment/overlays/openshift/kustomization.yaml`
-
-The OpenShift overlay sets the namespace to `openshift-tuning` and configures the default datasource for Thanos:
-
-```yaml
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-
-namespace: openshift-tuning     # Deploy to openshift-tuning namespace
-
-resources:
-- ../../base
-
-patches:
-  - patch: |-
-      apiVersion: apps/v1
-      kind: Deployment
-      metadata:
-        name: kruize-optimizer
-      spec:
-        template:
-          spec:
-            containers:
-              - name: kruize-optimizer
-                env:
-                  - name: KRUIZE_DEFAULT_DATASOURCE
-                    value: "thanos-1"
-    target:
-      kind: Deployment
-      name: kruize-optimizer
-```
-
-**Key Differences:**
-- **Kind**: Uses `prometheus-1` as default datasource, deploys to `monitoring` namespace
-- **OpenShift**: Uses `thanos-1` as default datasource, deploys to `openshift-tuning` namespace
+See the [Installation Guide](installation.md) for deployment instructions.
 
 ## Environment Variables
 
@@ -345,7 +245,7 @@ All environment variables used in Kruize Optimizer deployment:
 | `KRUIZE_STATE_REFRESH_INTERVAL` | 60m | Interval to refresh state and install missing profiles |
 | `KRUIZE_WEBHOOK_URL` | http://kruize-optimizer:8080/webhook | Webhook URL for bulk API callbacks |
 | `KRUIZE_TARGET_LABEL_LIMIT` | 1 | Max number of labels to process |
-| `KRUIZE_TARGET_LABELS` | {"kruize/autotune": "enabled"} | Labels as JSON String (Object or Array of "key=value") |
+| `KRUIZE_TARGET_LABELS` | {"ibm.runtimes.monitoring.enabled": "true"} | Labels as JSON String (Object or Array of "key=value") |
 | `KRUIZE_DEFAULT_DATASOURCE` | prometheus-1 | Default datasource name |
 | `KRUIZE_DEFAULT_METADATA_PROFILE` | cluster-metadata-local-monitoring | Default metadata profile name |
 | `KRUIZE_DEFAULT_METRIC_PROFILE` | resource-optimization-local-monitoring | Default metric profile name |
