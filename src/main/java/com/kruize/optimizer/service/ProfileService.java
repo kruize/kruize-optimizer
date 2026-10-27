@@ -317,7 +317,9 @@ public class ProfileService {
      * The bulk config's datasources list is an ordered preference list (e.g. ["thanos-1",
      * "prometheus-1"]). Pick the first one registered in Kruize and replace the list with that
      * single entry, since a bulk job supports only one datasource. This lets the bundled default
-     * config work on any platform. If none are registered, only the first entry is kept.
+     * config work on any platform. If none of the listed datasources is registered, the first
+     * datasource that is registered in Kruize is used and an error is logged asking to update the
+     * config with the right datasource.
      */
     private void resolveBulkConfigDatasource(BulkConfig bulkConfig) {
         List<String> preferred = bulkConfig.getDatasources();
@@ -325,9 +327,9 @@ public class ProfileService {
             return;
         }
 
-        Set<String> available = datasourceService.getDatasources().stream()
+        List<String> available = datasourceService.getDatasources().stream()
                 .map(Datasource::getName)
-                .collect(Collectors.toSet());
+                .collect(Collectors.toList());
 
         String resolved = preferred.stream()
                 .filter(available::contains)
@@ -335,11 +337,11 @@ public class ProfileService {
                 .orElse(null);
 
         if (resolved == null) {
-            resolved = preferred.get(0);
-            LOG.errorf("None of the datasources %s of bulk config '%s' are registered in Kruize (available: %s); "
-                            + "installing the config with '%s'. Bulk jobs for it will fail until a listed datasource "
-                            + "is registered or the config is updated.",
-                    preferred, bulkConfig.getConfigName(), available, resolved);
+            resolved = available.get(0);
+            LOG.errorf("None of the datasources %s of bulk config '%s' are registered in Kruize (registered: %s). "
+                            + "Continuing the install with the registered datasource '%s'. Update the bulk config "
+                            + "with the right datasource, e.g. PUT /bulkConfigs?config_name=%s.",
+                    preferred, bulkConfig.getConfigName(), available, resolved, bulkConfig.getConfigName());
         } else {
             LOG.infof("Using datasource '%s' for bulk config '%s' (preferred: %s, available: %s)",
                     resolved, bulkConfig.getConfigName(), preferred, available);
