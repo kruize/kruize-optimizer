@@ -1,7 +1,7 @@
 {
   "config_name": "default-bulk-config",
   "cluster_name": "default",
-  "datasources": ["thanos-1"],
+  "datasources": ["thanos-1", "prometheus-1"],
   "namespaces": [],
   "labels": {
     "ibm.runtimes.intelligence.monitoring": "true"

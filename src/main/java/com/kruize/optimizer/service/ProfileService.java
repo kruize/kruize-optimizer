@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kruize.optimizer.client.KruizeClient;
 import com.kruize.optimizer.exception.KruizeServiceException;
 import com.kruize.optimizer.model.kruize.BulkConfig;
+import com.kruize.optimizer.model.kruize.Datasource;
 import com.kruize.optimizer.model.kruize.KruizeProfile;
 import com.kruize.optimizer.utils.OptimizerConstants.MessageConstants;
 import com.kruize.optimizer.utils.OptimizerConstants.ProfileType;
@@ -47,6 +48,9 @@ public class ProfileService {
     @Inject
     @RestClient
     KruizeClient kruizeClient;
+
+    @Inject
+    DatasourceService datasourceService;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -297,8 +301,9 @@ public class ProfileService {
                     kruizeClient.createLayer(profileDefinition);
                     break;
                 case ProfileType.BULK:
-                    kruizeClient.createBulkConfig(
-                            objectMapper.convertValue(profileDefinition, BulkConfig.class));
+                    BulkConfig bulkConfig = objectMapper.convertValue(profileDefinition, BulkConfig.class);
+                    resolveBulkConfigDatasource(bulkConfig);
+                    kruizeClient.createBulkConfig(bulkConfig);
                     break;
                 default:
                     throw new IllegalArgumentException("Unknown profile type: " + profileType);
@@ -306,6 +311,40 @@ public class ProfileService {
         } catch (Exception e) {
             throw new RuntimeException("Failed to install profile: " + profileName, e);
         }
+    }
+
+    /**
+     * The bulk config's datasources list is an ordered preference list (e.g. ["thanos-1",
+     * "prometheus-1"]). Pick the first one registered in Kruize and replace the list with that
+     * single entry, since a bulk job supports only one datasource. This lets the bundled default
+     * config work on any platform. If none are registered, only the first entry is kept.
+     */
+    private void resolveBulkConfigDatasource(BulkConfig bulkConfig) {
+        List<String> preferred = bulkConfig.getDatasources();
+        if (preferred == null || preferred.isEmpty()) {
+            return;
+        }
+
+        Set<String> available = datasourceService.getDatasources().stream()
+                .map(Datasource::getName)
+                .collect(Collectors.toSet());
+
+        String resolved = preferred.stream()
+                .filter(available::contains)
+                .findFirst()
+                .orElse(null);
+
+        if (resolved == null) {
+            resolved = preferred.get(0);
+            LOG.errorf("None of the datasources %s of bulk config '%s' are registered in Kruize (available: %s); "
+                            + "installing the config with '%s'. Bulk jobs for it will fail until a listed datasource "
+                            + "is registered or the config is updated.",
+                    preferred, bulkConfig.getConfigName(), available, resolved);
+        } else {
+            LOG.infof("Using datasource '%s' for bulk config '%s' (preferred: %s, available: %s)",
+                    resolved, bulkConfig.getConfigName(), preferred, available);
+        }
+        bulkConfig.setDatasources(List.of(resolved));
     }
 
     /**
@@ -455,4 +494,5 @@ public class ProfileService {
         }
     }
 }
+
 
