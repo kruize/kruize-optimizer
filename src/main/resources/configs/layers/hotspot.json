@@ -37,7 +37,13 @@
         "datasource": "prometheus",
         "query": "jvm_memory_used_bytes{area=\"heap\",id=~\"Old.+\"}",
         "key": "pod"
-      }
+      },
+      {
+         "datasource": "prometheus",
+  	 "query": "container_cpu_usage_seconds_total{} * on(namespace, pod) group_left(label_ibm_runtimes_intelligence_monitoring) kube_pod_labels{label_ibm_runtimes_intelligence_monitoring=\"true\"}",
+         "key": "pod"
+       }
+
     ]
   },
   "tunables": [
