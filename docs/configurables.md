@@ -75,13 +75,6 @@ kruize:
     # Webhook URL for bulk API callbacks
     url: ${KRUIZE_WEBHOOK_URL:http://kruize-optimizer:8080/webhook}
 
-  target:
-    labels:
-      # Max number of labels to process
-      limit: ${KRUIZE_TARGET_LABEL_LIMIT:1}
-      # Pass labels as a JSON String (Object or Array of "key=value")
-      json: ${KRUIZE_TARGET_LABELS}
-
   defaults:
     # Default datasource name
     datasource: ${KRUIZE_DEFAULT_DATASOURCE:prometheus-1}
@@ -244,8 +237,6 @@ All environment variables used in Kruize Optimizer deployment:
 | `KRUIZE_STARTUP_INITIALIZE` | true | Enable/disable automatic initialization on startup |
 | `KRUIZE_STATE_REFRESH_INTERVAL` | 60m | Interval to refresh state and install missing profiles |
 | `KRUIZE_WEBHOOK_URL` | http://kruize-optimizer:8080/webhook | Webhook URL for bulk API callbacks |
-| `KRUIZE_TARGET_LABEL_LIMIT` | 1 | Max number of labels to process |
-| `KRUIZE_TARGET_LABELS` | {"ibm.runtimes.monitoring.enabled": "true"} | Labels as JSON String (Object or Array of "key=value") |
 | `KRUIZE_DEFAULT_DATASOURCE` | prometheus-1 | Default datasource name |
 | `KRUIZE_DEFAULT_METADATA_PROFILE` | cluster-metadata-local-monitoring | Default metadata profile name |
 | `KRUIZE_DEFAULT_METRIC_PROFILE` | resource-optimization-local-monitoring | Default metric profile name |
@@ -260,32 +251,8 @@ env:
   value: "http://kruize-service.monitoring:8080"
 - name: KRUIZE_STATE_REFRESH_INTERVAL
   value: "30m"
-- name: KRUIZE_TARGET_LABELS
-  value: '{"app": "myapp", "env": "production"}'
-```
-
-
-## Configuration Best Practices
-
-1. **Use Environment Variables**: For environment-specific values like URLs and intervals
-2. **Version Control**: Keep configuration files in version control
-3. **Documentation**: Document custom configurations and changes
-4. **Testing**: Test configuration changes in non-production environments first
-5. **Validation**: Validate configuration before deployment
-6. **Rebuild Images**: Remember to rebuild Docker images after modifying profiles or layers
-
-## Configuration Validation
-
-### Validate YAML Files
-
-```bash
-# Validate Kubernetes manifests
-kubectl apply --dry-run=client -f deployment/base/deployment.yaml
-
-# Validate with kustomize
-kubectl kustomize deployment/overlays/kind/
 ```
 
 ---
 
-**Last Updated**: 2026-10-25
+**Last Updated**: 2026-11-04

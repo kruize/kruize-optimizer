@@ -11,12 +11,8 @@ Complete API documentation for Kruize Optimizer REST endpoints.
 - [Error Handling](#error-handling)
 - [API Endpoints](#api-endpoints)
   - [Webhook API](#webhook-api)
-  - [Datasource API](#datasource-api)
   - [Jobs API](#jobs-api)
-  - [Metadata Profile API](#metadata-profile-api)
-  - [Metric Profile API](#metric-profile-api)
-  - [Layer API](#layer-api)
-  - [Status API](#status-api)
+- [Kruize APIs](#kruize-apis)
 
 ## Base URL
 
@@ -320,36 +316,6 @@ curl -X POST http://localhost:8080/webhook/config/bulk \
 
 ---
 
-### Datasource API
-
-#### List Datasources
-
-Retrieves the list of configured datasources from Kruize.
-
-**Endpoint:** `GET /kruize/datasources/list`
-
-**Response (200 OK):**
-
-```json
-[
-  {
-    "name": "prometheus-1",
-    "provider": "prometheus",
-    "url": "http://prometheus:9090",
-    "service_name": "prometheus",
-    "namespace": "monitoring"
-  }
-]
-```
-
-**Example:**
-
-```bash
-curl http://localhost:8080/kruize/datasources/list
-```
-
----
-
 ### Jobs API
 
 #### Jobs Overview
@@ -377,164 +343,9 @@ curl http://localhost:8080/jobs/overview
 
 ---
 
-### Metadata Profile API
+## Kruize APIs
 
-#### List Metadata Profiles
-
-Retrieves metadata profiles from Kruize.
-
-**Endpoint:** `GET /kruize/metadataProfiles/list`
-
-**Response (200 OK):**
-
-```json
-[
-  {
-    "name": "cluster-metadata-local-monitoring",
-    "profile_version": 1.0
-  }
-]
-```
-
-**Example:**
-
-```bash
-curl http://localhost:8080/kruize/metadataProfiles/list
-```
-
-#### Install Metadata Profiles
-
-Installs missing metadata profiles from the Optimizer's local config into Kruize.
-
-**Endpoint:** `POST /kruize/metadataProfiles/install`
-
-**Response (200 OK):**
-
-```json
-{
-  "status": "success",
-  "message": "Missing metadata profiles installed"
-}
-```
-
----
-
-### Metric Profile API
-
-#### List Metric Profiles
-
-Retrieves metric profiles from Kruize.
-
-**Endpoint:** `GET /kruize/metricProfiles/list`
-
-**Response (200 OK):**
-
-```json
-[
-  {
-    "name": "resource-optimization-local-monitoring",
-    "profile_version": 1.0
-  }
-]
-```
-
-**Example:**
-
-```bash
-curl http://localhost:8080/kruize/metricProfiles/list
-```
-
-#### Install Metric Profiles
-
-Installs missing metric profiles from the Optimizer's local config into Kruize.
-
-**Endpoint:** `POST /kruize/metricProfiles/install`
-
-**Response (200 OK):**
-
-```json
-{
-  "status": "success",
-  "message": "Missing metric profiles installed"
-}
-```
-
----
-
-### Layer API
-
-#### List Layers
-
-Retrieves layer configurations from Kruize.
-
-**Endpoint:** `GET /kruize/layers/list`
-
-**Response (200 OK):**
-
-```json
-[
-  {
-    "name": "container"
-  },
-  {
-    "name": "hotspot"
-  }
-]
-```
-
-**Example:**
-
-```bash
-curl http://localhost:8080/kruize/layers/list
-```
-
-#### Install Layers
-
-Installs missing layer configurations from the Optimizer's local config into Kruize.
-
-**Endpoint:** `POST /kruize/layers/install`
-
-**Response (200 OK):**
-
-```json
-{
-  "status": "success",
-  "message": "Missing layers installed"
-}
-```
-
----
-
-### Status API
-
-#### System Status
-
-Returns the aggregated system status including datasources, profiles, layers, and alerts.
-
-**Endpoint:** `GET /kruize/status`
-
-**Response (200 OK):**
-
-```json
-{
-  "datasources": {
-    "count": 1,
-    "available": true
-  },
-  "profiles": {
-    "metadata": 1,
-    "metric": 1,
-    "layers": 4
-  },
-  "alerts": []
-}
-```
-
-**Example:**
-
-```bash
-curl http://localhost:8080/kruize/status
-```
+The Optimizer proxies several Kruize Autotune APIs (datasources, metadata profiles, metric profiles, layers, status). For documentation on these APIs, refer to the [Kruize Autotune API documentation](https://github.com/kruize/autotune/tree/master/design).
 
 ---
 
@@ -546,4 +357,4 @@ For API support and questions:
 
 ---
 
-**Last Updated**: 2026-10-25
+**Last Updated**: 2026-11-04
