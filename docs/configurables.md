@@ -7,10 +7,9 @@ This guide describes all configurable options available in Kruize Optimizer and 
 - [Overview](#overview)
 - [Application Configuration](#application-configuration)
 - [Profile Configuration](#profile-configuration)
-- [Layer Configuration](#layer-configuration)
+- [Bulk Config Configuration](#bulk-config-configuration)
 - [Deployment Configuration](#deployment-configuration)
 - [Environment Variables](#environment-variables)
-- [Configuration Best Practices](#configuration-best-practices)
 
 ## Overview
 
@@ -18,8 +17,7 @@ Kruize Optimizer uses a combination of configuration files, environment variable
 
 1. **Application Level**: Core application settings
 2. **Profile Level**: Metadata and metric profiles
-3. **Layer Level**: Optimization layer configurations
-4. **Deployment Level**: Kubernetes/OpenShift deployment settings
+3. **Deployment Level**: Kubernetes/OpenShift deployment settings
 
 ## Application Configuration
 
@@ -106,105 +104,19 @@ export KRUIZE_STATE_REFRESH_INTERVAL=30m
 
 ## Profile Configuration
 
-### Important Note
+The Optimizer bundles default metadata and metric profiles that are automatically installed into Kruize on startup if missing.
 
-**After updating profiles, you must rebuild the Docker image** as profiles are bundled into the application at build time.
+- **Metadata Profiles**: `src/main/resources/configs/v1.0/metadata-profiles/`
+- **Metric Profiles**: `src/main/resources/configs/v1.0/metric-profiles/`
 
-```bash
-# Rebuild the image after profile changes
-./build_and_push.sh -p false
-```
+For profile schema and design details, refer to the [Kruize Autotune documentation](https://github.com/kruize/autotune/tree/master/design).
 
-See the [Build Guide](build.md) for detailed build instructions.
-
-### Metadata Profiles
-
-Metadata profiles define cluster and application metadata structure.
-
-**Location**: `src/main/resources/configs/v1.0/metadata-profiles/`
-
-**Design Documentation**: https://github.com/kruize/autotune/tree/master/design
-
-#### Creating Custom Metadata Profiles
-
-1. Create a new JSON file in the metadata-profiles directory
-2. Follow the schema structure from existing profiles
-3. Update the [`configsReferenceIndex.json`](../src/main/resources/configs/configsReferenceIndex.json) file
-4. Rebuild the Docker image
-
-### Metric Profiles
-
-Metric profiles specify which metrics to collect and analyze.
-
-**Location**: `src/main/resources/configs/v1.0/metric-profiles/`
-
-**Design Documentation**: https://github.com/kruize/autotune/tree/master/design
-
-#### Creating Custom Metric Profiles
-
-1. Create a new JSON file in the metric-profiles directory
-2. Follow the schema structure from existing profiles
-3. Update the [`configsReferenceIndex.json`](../src/main/resources/configs/configsReferenceIndex.json) file
-4. Rebuild the Docker image
-
-## Layer Configuration
-
-Layer configurations define parameters for different layers (container, JVM, framework).
-
-**Location**: `src/main/resources/configs/layers/`
-
-**Design Documentation**: https://github.com/kruize/autotune/tree/master/design
-
-### Creating Custom Layers
-
-1. Create a new JSON file in the layers directory
-2. Follow the schema structure from existing layers
-3. Update the [`configsReferenceIndex.json`](../src/main/resources/configs/configsReferenceIndex.json) file
-4. Rebuild the Docker image
 
 ## Bulk Config Configuration
 
-Bulk job scheduling is **config-driven** rather than using global environment variables. Each `BulkConfig` object stored in Kruize defines its own scheduling interval, target namespaces, labels, and experiment settings.
+Bulk job scheduling is **config-driven**. Each `BulkConfig` object stored in Kruize defines its own scheduling interval, target namespaces, labels, and experiment settings. The Optimizer fetches enabled configs on startup and schedules per-config timers automatically.
 
-### How It Works
-
-1. On startup, `ConfigTimerManager` fetches all enabled `BulkConfig` objects from Kruize via `BulkConfigService`
-2. A per-config timer is created based on each config's `recommendation_settings.scheduling` value
-3. When a timer fires, `BulkConfigService` converts the config into a bulk job request and submits it to Kruize
-4. Configs can be updated at runtime via the `POST /webhook/config/bulk` endpoint without requiring a restart
-
-### Local Bulk Config Profiles
-
-Default bulk config profiles are bundled with the application:
-
-**Location**: `src/main/resources/configs/v1.0/bulk-configs/`
-
-These are registered in [`configsReferenceIndex.json`](../src/main/resources/configs/configsReferenceIndex.json) under the `bulk_configs` section and are automatically installed into Kruize on startup if missing.
-
-The `recommendation_settings.scheduling` field in each bulk config profile supports human-readable duration strings:
-
-| Format  | Examples                    |
-|---------|-----------------------------|
-| Hours   | `24h`, `1hr`, `2hours`      |
-| Minutes | `15m`, `30min`, `45minutes` |
-| Days    | `1d`, `2day`, `7days`       |
-
-### BulkConfig Fields
-
-| Field                     | Type     | Description                                               |
-|---------------------------|----------|-----------------------------------------------------------|
-| `config_name`             | string   | Unique name for the config                                |
-| `cluster_name`            | string   | Target cluster name                                       |
-| `datasources`             | string[] | List of datasource names                                  |
-| `namespaces`              | string[] | Target namespaces to filter                               |
-| `labels`                  | object   | Label key-value pairs to filter workloads                 |
-| `experiment_types`        | string[] | Experiment types (e.g., "container", "namespace")         |
-| `metadata_profile`        | string   | Metadata profile name                                     |
-| `performance_profile`     | string   | Performance profile name                                  |
-| `trial_settings`          | object   | Trial settings (`measurement_duration`)                   |
-| `recommendation_settings` | object   | Recommendation settings (`scheduling`, `terms`, `models`) |
-| `webhook_url`             | string   | Webhook URL override                                      |
-| `enabled`                 | boolean  | Whether the config is active                              |
+For bulk config fields, API details, and usage, refer to the [Kruize Autotune documentation](https://github.com/kruize/autotune/tree/master/design).
 
 ## Deployment Configuration
 
@@ -254,5 +166,7 @@ env:
 ```
 
 ---
+
+**Previous**: [Installation Guide](installation.md) | **Next**: [API Reference](optimizerAPI.md) | [Back to docs](README.md)
 
 **Last Updated**: 2026-11-04

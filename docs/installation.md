@@ -321,13 +321,8 @@ If you encounter issues not covered here:
 3. Consult the [Configuration Guide](configurables.md)
 4. Open a new issue with detailed information
 
-## Next Steps
-
-- Configure your installation: [Configuration Guide](configurables.md)
-- Explore the API: [API Reference](optimizerAPI.md)
-- Understand the architecture: [Design Documentation](design.md)
-- Contribute to the project: [Contributing Guide](contributing.md)
-
 ---
 
-**Last Updated**: 2026-05-05
+**Next**: [Configuration Guide](configurables.md) | [Back to docs](README.md)
+
+**Last Updated**: 2026-11-04

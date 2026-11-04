@@ -10,7 +10,6 @@ This document describes the architecture, design principles, and key components 
 - [Design Principles](#design-principles)
 - [Data Flow](#data-flow)
 - [Technology Stack](#technology-stack)
-- [Extension Points](#extension-points)
 
 ## Overview
 
@@ -75,72 +74,17 @@ graph TB
 
 ## Core Components
 
-### 1. Resource Layer
+### 1. Optimizer Workflow
 
-The resource layer handles HTTP requests and provides RESTful endpoints.
+On startup, the Optimizer connects to Kruize and ensures all required profiles (metadata, metric, layer, bulk config) are installed. It then fetches all enabled BulkConfig objects from Kruize and schedules a recurring timer for each based on its configured interval.
 
-**Key Resources:**
-- [`WebhookResource`](../src/main/java/com/kruize/optimizer/resource/WebhookResource.java) - Processes webhook events (`POST /webhook`, `POST /webhook/config/bulk`)
-- [`DatasourceResource`](../src/main/java/com/kruize/optimizer/resource/DatasourceResource.java) - Manages datasource operations
-- [`JobsResource`](../src/main/java/com/kruize/optimizer/resource/JobsResource.java) - Handles optimization job operations
-- [`MetadataProfileResource`](../src/main/java/com/kruize/optimizer/resource/MetadataProfileResource.java) - Manages metadata profiles
-- [`MetricProfileResource`](../src/main/java/com/kruize/optimizer/resource/MetricProfileResource.java) - Manages metric profiles
-- [`LayerResource`](../src/main/java/com/kruize/optimizer/resource/LayerResource.java) - Handles layer configurations
-- [`StatusResource`](../src/main/java/com/kruize/optimizer/resource/StatusResource.java) - Provides Kruize system status
+When a timer fires, the Optimizer converts the BulkConfig into a bulk job request — applying its namespace, label, and experiment type filters — and submits it to Kruize. Kruize processes the experiments, generates recommendations, and sends the results back to the Optimizer via a webhook callback. The Optimizer tracks job and experiment counts for observability.
 
-### 2. Service Layer
+A periodic state refresh ensures newly added profiles are installed and the cached Kruize state (datasources, profiles, layers) stays current.
 
-The service layer contains business logic and orchestrates operations.
+### 2. Bulk Config Update
 
-**Key Services:**
-- [`BulkSchedulerService`](../src/main/java/com/kruize/optimizer/service/BulkSchedulerService.java) - Orchestrates startup initialization, handles webhook callbacks
-- [`BulkConfigService`](../src/main/java/com/kruize/optimizer/service/BulkConfigService.java) - Fetches enabled bulk configs from Kruize, converts them to bulk job requests, parses scheduling strings
-- [`ConfigTimerManager`](../src/main/java/com/kruize/optimizer/service/ConfigTimerManager.java) - Manages per-config scheduled timers for periodic bulk job execution
-- [`KruizeStateService`](../src/main/java/com/kruize/optimizer/service/KruizeStateService.java) - Caches Kruize state (datasources, profiles, layers) with periodic refresh
-- [`ProfileService`](../src/main/java/com/kruize/optimizer/service/ProfileService.java) - Profile management (install/list metadata, metric, layer, and bulk config profiles)
-- [`DatasourceService`](../src/main/java/com/kruize/optimizer/service/DatasourceService.java) - Datasource management logic
-- [`JobsService`](../src/main/java/com/kruize/optimizer/service/JobsService.java) - Tracks bulk job and experiment counters
-- [`StatusService`](../src/main/java/com/kruize/optimizer/service/StatusService.java) - Aggregates system status information
-
-### 3. Model Layer
-
-Domain models representing core entities.
-
-**Key Models:**
-- [`BulkConfig`](../src/main/java/com/kruize/optimizer/model/kruize/BulkConfig.java) - Bulk configuration with scheduling, filters, and experiment settings
-- [`RecommendationSettings`](../src/main/java/com/kruize/optimizer/model/kruize/RecommendationSettings.java) - Recommendation settings (scheduling, terms, models)
-- [`TrialSettings`](../src/main/java/com/kruize/optimizer/model/kruize/TrialSettings.java) - Trial settings (measurement_duration)
-- [`Datasource`](../src/main/java/com/kruize/optimizer/model/kruize/Datasource.java) - Datasource configuration
-- [`JobsOverview`](../src/main/java/com/kruize/optimizer/model/kruize/JobsOverview.java) - Job information
-- [`KruizeProfile`](../src/main/java/com/kruize/optimizer/model/kruize/KruizeProfile.java) - Profile definitions
-- [`KruizeStatus`](../src/main/java/com/kruize/optimizer/model/kruize/KruizeStatus.java) - System status
-- [`WebhookPayload`](../src/main/java/com/kruize/optimizer/model/WebhookPayload.java) - Webhook data structure
-
-### 4. Client Layer
-
-External system integration.
-
-**Key Clients:**
-- [`KruizeClient`](../src/main/java/com/kruize/optimizer/client/KruizeClient.java) - HTTP client for external services
-
-### 5. Configuration System
-
-Profile-based configuration for flexibility and extensibility.
-
-**Configuration Types:**
-- **Metadata Profiles**: Define cluster and application metadata
-  - [`cluster-metadata-local-monitoring.json`](../src/main/resources/configs/v1.0/metadata-profiles/cluster-metadata-local-monitoring.json) - Cluster metadata profile
-- **Metric Profiles**: Specify metrics to collect and analyze
-  - [`resource-optimization-local-monitoring.json`](../src/main/resources/configs/v1.0/metric-profiles/resource-optimization-local-monitoring.json) - Resource optimization metric profile
-- **Bulk Configs**: Define per-config scheduling, filtering, and experiment creation settings
-  - [`default-bulk-config.json`](../src/main/resources/configs/v1.0/bulk-configs/default-bulk-config.json) - Default bulk config
-- **Layer Configurations**: Container, JVM, and framework-specific settings
-
-**Configuration Files:**
-- [`container.json`](../src/main/resources/configs/layers/container.json) - Container layer config
-- [`hotspot.json`](../src/main/resources/configs/layers/hotspot.json) - Hotspot JVM config
-- [`quarkus.json`](../src/main/resources/configs/layers/quarkus.json) - Quarkus framework config
-- [`semeru.json`](../src/main/resources/configs/layers/semeru.json) - Semeru JVM config
+BulkConfig objects can be updated at runtime without restarting the Optimizer. When Kruize sends an update to the `POST /webhook/config/bulk` endpoint, the Optimizer evaluates the change and adjusts accordingly: creating or rescheduling a timer for enabled configs, canceling timers for disabled configs, or triggering an immediate job execution when a schedule is shortened.
 
 ## Design Principles
 
@@ -267,4 +211,6 @@ The service is designed to be stateless where possible:
 
 ---
 
-**Last Updated**: 2026-10-25
+**Previous**: [API Reference](optimizerAPI.md) | **Next**: [Build Guide](build.md) | [Back to docs](README.md)
+
+**Last Updated**: 2026-11-04

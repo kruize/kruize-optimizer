@@ -27,6 +27,11 @@ kubectl apply -k deployment/overlays/openshift
 
 This deploys to the `openshift-tuning` namespace.
 
+For detailed installation instructions, see the [Installation Guide](docs/installation.md).
+
+## Documentation
+
+For detailed documentation, see the [docs/](docs/README.md) directory covering installation, configuration, API reference, architecture, and contributing guidelines.
 
 ## Running the application in dev mode
 

@@ -143,6 +143,9 @@ Process incoming webhook events containing bulk API results.
 
 The webhook receives an array of webhook payload objects containing job summaries and webhook status.
 
+<details>
+<summary><b>Example Request</b></summary>
+
 ```json
 [
   {
@@ -160,7 +163,10 @@ The webhook receives an array of webhook payload objects containing job summarie
 ]
 ```
 
-**Request Body Schema:**
+</details>
+
+<details>
+<summary><b>Request Body Schema</b></summary>
 
 ```json
 {
@@ -207,7 +213,10 @@ The webhook receives an array of webhook payload objects containing job summarie
 }
 ```
 
-**Response:**
+</details>
+
+<details>
+<summary><b>Example Response</b></summary>
 
 **Success (200 OK):**
 
@@ -228,7 +237,10 @@ The webhook receives an array of webhook payload objects containing job summarie
 }
 ```
 
-**Example:**
+</details>
+
+<details>
+<summary><b>Example curl</b></summary>
 
 ```bash
 curl -X POST http://localhost:8080/webhook \
@@ -248,6 +260,8 @@ curl -X POST http://localhost:8080/webhook \
     }
   ]'
 ```
+
+</details>
 
 **Use Case:**
 
@@ -273,6 +287,9 @@ Receive bulk config update notifications from Kruize, allowing the scheduler to 
 
 A single BulkConfig object with at minimum a `config_name` field.
 
+<details>
+<summary><b>Example Request</b></summary>
+
 ```json
 {
   "config_name": "my-config",
@@ -294,13 +311,16 @@ A single BulkConfig object with at minimum a `config_name` field.
 }
 ```
 
+</details>
+
 **Response:**
 
 - **200 OK** - Config update processed successfully
 - **400 Bad Request** - `config_name` is null or empty
 - **500 Internal Server Error** - Processing error
 
-**Example:**
+<details>
+<summary><b>Example curl</b></summary>
 
 ```bash
 curl -X POST http://localhost:8080/webhook/config/bulk \
@@ -314,6 +334,8 @@ curl -X POST http://localhost:8080/webhook/config/bulk \
   }'
 ```
 
+</details>
+
 ---
 
 ### Jobs API
@@ -323,6 +345,9 @@ curl -X POST http://localhost:8080/webhook/config/bulk \
 Returns bulk job statistics tracked by the Optimizer.
 
 **Endpoint:** `GET /jobs/overview`
+
+<details>
+<summary><b>Example Response</b></summary>
 
 **Response (200 OK):**
 
@@ -341,6 +366,8 @@ Returns bulk job statistics tracked by the Optimizer.
 curl http://localhost:8080/jobs/overview
 ```
 
+</details>
+
 ---
 
 ## Kruize APIs
@@ -356,5 +383,7 @@ For API support and questions:
 - Documentation: [docs/README.md](README.md)
 
 ---
+
+**Previous**: [Configuration Guide](configurables.md) | **Next**: [Design Documentation](design.md) | [Back to docs](README.md)
 
 **Last Updated**: 2026-11-04
