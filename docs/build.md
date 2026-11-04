@@ -7,7 +7,6 @@ This guide explains how to build and push Docker images for Kruize Optimizer.
 - [Overview](#overview)
 - [Build Script](#build-script)
 - [Build Options](#build-options)
-- [Examples](#examples)
 
 ## Overview
 
@@ -96,72 +95,8 @@ Build for multiple platforms (default):
 ./build_and_push.sh -l linux/amd64,linux/arm64
 ```
 
-## Examples
-
-### Example 1: Local Development Build
-
-Build locally for testing without pushing:
-
-```bash
-./build_and_push.sh -t dev -p false -l linux/amd64
-```
-
-### Example 2: Release Build
-
-Build and push a release version:
-
-```bash
-./build_and_push.sh -t 1.0.0
-```
-
-### Example 3: Custom Registry
-
-Build and push to a custom registry:
-
-```bash
-./build_and_push.sh -i myregistry.com/kruize/optimizer:latest
-```
-
-### Example 4: Build Only for Testing
-
-Build without pushing to test changes:
-
-```bash
-./build_and_push.sh -b true -p false
-```
-
-
-## Manual Build
-
-If you prefer to build manually without the script:
-
-### Using Maven with Quarkus Jib
-
-```bash
-# Build only
-./mvnw clean package \
-  -Dquarkus.container-image.build=true \
-  -Dquarkus.container-image.push=false
-
-# Build and push
-./mvnw clean package \
-  -Dquarkus.container-image.build=true \
-  -Dquarkus.container-image.image=quay.io/kruize/optimizer:1.0.0 \
-  -Dquarkus.container-image.push=true \
-  -Dquarkus.jib.platforms=linux/amd64,linux/arm64
-```
-
-### Using Docker Directly
-
-```bash
-# Build JVM image
-docker build -f src/main/docker/Dockerfile.jvm -t kruize-optimizer:latest .
-
-# Build native image (requires GraalVM)
-docker build -f src/main/docker/Dockerfile.native -t kruize-optimizer:native .
-```
-
+For more options, run `./build_and_push.sh -h`.
 
 ---
 
-**Last Updated**: 2026-05-05
+**Last Updated**: 2026-11-04
