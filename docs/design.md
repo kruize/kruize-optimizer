@@ -115,24 +115,6 @@ The service is designed to be stateless where possible:
 
 ## Data Flow
 
-### Startup Flow
-
-```
-1. Startup.onStart() fires on application start
-   ↓
-2. BulkSchedulerService.initialize() called
-   ↓
-3. KruizeStateService.refreshStateAndInstallProfiles()
-   → Refreshes cached state (datasources, profiles, layers)
-   → Installs missing profiles (metadata, metric, layer, bulk config)
-   ↓
-4. ConfigTimerManager.initializeConfigs()
-   → Fetches enabled BulkConfigs from Kruize
-   → Schedules a per-config timer for each based on its scheduling interval
-   ↓
-5. Optimizer is ready
-```
-
 ### Optimizer Job Flow
 
 ```
@@ -142,36 +124,18 @@ The service is designed to be stateless where possible:
    ↓
 3. User labels their workloads
    ↓
-4. Per-config timer fires: BulkConfigService converts config to bulk job request
+4. Per-config timer fires: converts BulkConfig to bulk job request
+   (applies filters: namespaces, labels, experiment types, datasource)
    ↓
-5. Bulk job submitted to Kruize via KruizeClient
+5. Bulk job submitted to Kruize
    ↓
 6. Kruize generates recommendations for created experiments
    ↓
-7. Results stored in Kruize DB
+7. Kruize sends webhook callback to Optimizer
    ↓
-8. Kruize sends webhook callback to Optimizer
+8. Optimizer updates job/experiment counters
    ↓
-9. Optimizer updates job/experiment counters via JobsService
-   ↓
-10. Users view recommendations on Kruize UI
-```
-
-### Bulk Operation Flow
-
-```
-1. ConfigTimerManager fires per-config timer
-   ↓
-2. BulkConfigService converts BulkConfig to bulk job request
-   (applies filters: namespaces, labels, experiment types, datasource)
-   ↓
-3. Bulk job submitted to Kruize via KruizeClient
-   ↓
-4. Kruize processes experiments
-   ↓
-5. Results received via webhook callback (POST /webhook)
-   ↓
-6. JobsService updates experiment counters
+9. Users view recommendations on Kruize UI
 ```
 
 ### Config Update Flow
@@ -179,9 +143,7 @@ The service is designed to be stateless where possible:
 ```
 1. Kruize sends config update to POST /webhook/config/bulk
    ↓
-2. WebhookResource validates config_name and passes to BulkSchedulerService
-   ↓
-3. ConfigTimerManager.updateConfigTimer() evaluates the change:
+2. Optimizer evaluates the change:
    → Config enabled with new schedule: timer created or rescheduled
    → Config disabled: existing timer canceled
    → Schedule shortened: next job executes immediately

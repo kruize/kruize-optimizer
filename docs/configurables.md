@@ -8,7 +8,6 @@ This guide describes all configurable options available in Kruize Optimizer and 
 - [Application Configuration](#application-configuration)
 - [Profile Configuration](#profile-configuration)
 - [Bulk Config Configuration](#bulk-config-configuration)
-- [Deployment Configuration](#deployment-configuration)
 - [Environment Variables](#environment-variables)
 
 ## Overview
@@ -17,7 +16,6 @@ Kruize Optimizer uses a combination of configuration files, environment variable
 
 1. **Application Level**: Core application settings
 2. **Profile Level**: Metadata and metric profiles
-3. **Deployment Level**: Kubernetes/OpenShift deployment settings
 
 ## Application Configuration
 
@@ -117,16 +115,6 @@ For profile schema and design details, refer to the [Kruize Autotune documentati
 Bulk job scheduling is **config-driven**. Each `BulkConfig` object stored in Kruize defines its own scheduling interval, target namespaces, labels, and experiment settings. The Optimizer fetches enabled configs on startup and schedules per-config timers automatically.
 
 For bulk config fields, API details, and usage, refer to the [Kruize Autotune documentation](https://github.com/kruize/autotune/tree/master/design).
-
-## Deployment Configuration
-
-The deployment is managed via Kustomize with environment-specific overlays:
-
-- **Base**: [`deployment/base/deployment.yaml`](../deployment/base/deployment.yaml)
-- **Kind overlay**: [`deployment/overlays/kind/`](../deployment/overlays/kind/) — deploys to `monitoring` namespace, uses `prometheus-1` datasource
-- **OpenShift overlay**: [`deployment/overlays/openshift/`](../deployment/overlays/openshift/) — deploys to `openshift-tuning` namespace, uses `thanos-1` datasource
-
-See the [Installation Guide](installation.md) for deployment instructions.
 
 ## Environment Variables
 
