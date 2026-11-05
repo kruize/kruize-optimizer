@@ -12,25 +12,7 @@ This guide explains how to build and push Docker images for Kruize Optimizer.
 
 Kruize Optimizer provides a convenient build script ([`build_and_push.sh`](../build_and_push.sh)) that simplifies building and pushing Docker images. The script uses Quarkus Jib extension for efficient container image creation.
 
-
-### Configure Registry Credentials
-
-For pushing to container registries:
-
-```bash
-# For Quay.io
-docker login quay.io
-
-# For Docker Hub
-docker login
-
-# For other registries
-docker login <registry-url>
-```
-
 ## Build Script
-
-The build script is located at the root of the repository: [`build_and_push.sh`](../build_and_push.sh)
 
 ### Basic Usage
 
@@ -63,7 +45,7 @@ Build the image locally without pushing to a registry:
 
 ### 2. Build and Push with Custom Tag
 
-Build and push with a specific tag:
+Build and push with a specific tag (run `docker login <registry-url>` first):
 
 ```bash
 ./build_and_push.sh -t 1.0.0

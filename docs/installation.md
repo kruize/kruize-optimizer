@@ -10,8 +10,6 @@ This guide provides detailed instructions for installing and deploying Kruize Op
   - [Kind Installation](#kind-installation)
   - [OpenShift Installation](#openshift-installation)
   - [Local Development Setup](#local-development-setup)
-- [Verification](#verification)
-- [Configuration](#configuration)
 - [Troubleshooting](#troubleshooting)
 
 ## Prerequisites
@@ -130,8 +128,6 @@ curl http://<route-url>/openapi
 # Or access it in your browser at http://<route-url>/openapi
 ```
 
-> **Note**: Some browsers may download the OpenAPI specification as a file instead of rendering it inline. This is normal behavior and indicates the endpoint is working correctly. We will add support for the health and readiness check endpoints in the upcoming release.
-
 ### Local Development Setup
 
 #### Building from Source
@@ -171,65 +167,7 @@ See the [Configuration Guide](configurables.md) for more details.
 
 The application will start on `http://localhost:8080` with hot reload enabled.
 
-#### Running Tests
-
-```bash
-# Run all tests
-./mvnw test
-
-# Run specific test class
-./mvnw test -Dtest=DatasourceResourceTest
-
-# Run with coverage
-./mvnw verify
-```
-
-## Verification
-
-### Check Pod Status
-
-**For Kubernetes (Kind):**
-```bash
-kubectl get pods -l app=kruize-optimizer -n monitoring
-```
-
-**For OpenShift:**
-```bash
-oc get pods -l app=kruize-optimizer -n openshift-tuning
-```
-
-### Check Service Status
-
-**For Kubernetes (Kind):**
-```bash
-kubectl get svc kruize-optimizer -n monitoring
-```
-
-**For OpenShift:**
-```bash
-oc get svc kruize-optimizer -n openshift-tuning
-```
-
-### API Availability
-
-Once the service is running, verify API availability using the OpenAPI endpoint:
-
-```bash
-# If using port-forward or local development
-curl http://localhost:8080/openapi
-
-# If using OpenShift route
-curl http://<route-url>/openapi
-```
-
-> **Note**: Some browsers may download the OpenAPI specification as a file instead of rendering it inline. This is normal behavior and indicates the endpoint is working correctly. We will add support for the health and readiness check endpoints in the upcoming release.
-
-For complete API documentation, see the [API Reference](optimizerAPI.md).
-
-## Configuration
-
-After installation, you can customize Kruize Optimizer according to your needs.
-For detailed configuration options, see the [Configuration Guide](configurables.md).
+For running tests, see the [Contributing Guide](contributing.md).
 
 ## Troubleshooting
 

@@ -80,26 +80,6 @@ kruize:
     metric-profile: ${KRUIZE_DEFAULT_METRIC_PROFILE:resource-optimization-local-monitoring}
 ```
 
-### Modifying Application Configuration
-
-#### 1. Edit application.yml
-
-```yaml
-# Example: Change Kruize URL
-kruize:
-  url: http://kruize-service.monitoring:8080
-```
-
-#### 2. Using Environment Variables
-
-```bash
-# Override Kruize URL
-export KRUIZE_URL=http://kruize-service.monitoring:8080
-
-# Override state refresh interval
-export KRUIZE_STATE_REFRESH_INTERVAL=30m
-```
-
 ## Profile Configuration
 
 The Optimizer bundles default metadata and metric profiles that are automatically installed into Kruize on startup if missing.
@@ -140,18 +120,6 @@ All environment variables used in Kruize Optimizer deployment:
 | `KRUIZE_DEFAULT_DATASOURCE` | prometheus-1 | Default datasource name |
 | `KRUIZE_DEFAULT_METADATA_PROFILE` | cluster-metadata-local-monitoring | Default metadata profile name |
 | `KRUIZE_DEFAULT_METRIC_PROFILE` | resource-optimization-local-monitoring | Default metric profile name |
-
-### Setting Environment Variables
-
-#### In Deployment YAML
-
-```yaml
-env:
-- name: KRUIZE_URL
-  value: "http://kruize-service.monitoring:8080"
-- name: KRUIZE_STATE_REFRESH_INTERVAL
-  value: "30m"
-```
 
 ---
 

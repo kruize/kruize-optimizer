@@ -6,9 +6,8 @@ This document describes the architecture, design principles, and key components 
 
 - [Overview](#overview)
 - [Architecture](#architecture)
-- [Core Components](#core-components)
+- [Core Workflows](#core-workflows)
 - [Design Principles](#design-principles)
-- [Data Flow](#data-flow)
 - [Technology Stack](#technology-stack)
 
 ## Overview
@@ -66,13 +65,7 @@ graph TB
     class OPT highlightNode;
 ```
 
-### Component Interaction
-
-- Users will directly interact with Kruize APIs or UI. 
-- Optimizer will interact with Kruize to create experiments and manage profiles. 
-- The UI will interact with Kruize to display and manage experiments/recommendations.
-
-## Core Components
+## Core Workflows
 
 ### 1. Optimizer Workflow
 
@@ -82,9 +75,39 @@ When a timer fires, the Optimizer converts the BulkConfig into a bulk job reques
 
 A periodic state refresh ensures newly added profiles are installed and the cached Kruize state (datasources, profiles, layers) stays current.
 
+```
+1. User installs Kruize and Optimizer
+   ↓
+2. Optimizer installs missing profiles on startup (and periodically)
+   ↓
+3. User labels their workloads
+   ↓
+4. Per-config timer fires: converts BulkConfig to bulk job request
+   (applies filters: namespaces, labels, experiment types, datasource)
+   ↓
+5. Bulk job submitted to Kruize
+   ↓
+6. Kruize generates recommendations for created experiments
+   ↓
+7. Kruize sends webhook callback to Optimizer
+   ↓
+8. Optimizer updates job/experiment counters
+   ↓
+9. Users view recommendations on Kruize UI
+```
+
 ### 2. Bulk Config Update
 
 BulkConfig objects can be updated at runtime without restarting the Optimizer. When Kruize sends an update to the `POST /webhook/config/bulk` endpoint, the Optimizer evaluates the change and adjusts accordingly: creating or rescheduling a timer for enabled configs, canceling timers for disabled configs, or triggering an immediate job execution when a schedule is shortened.
+
+```
+1. Kruize sends config update to POST /webhook/config/bulk
+   ↓
+2. Optimizer evaluates the change:
+   → Config enabled with new schedule: timer created or rescheduled
+   → Config disabled: existing timer canceled
+   → Schedule shortened: next job executes immediately
+```
 
 ## Design Principles
 
@@ -112,42 +135,6 @@ The service is designed to be stateless where possible:
 - Improves reliability
 
 
-
-## Data Flow
-
-### Optimizer Job Flow
-
-```
-1. User installs Kruize and Optimizer
-   ↓
-2. Optimizer installs missing profiles on startup (and periodically)
-   ↓
-3. User labels their workloads
-   ↓
-4. Per-config timer fires: converts BulkConfig to bulk job request
-   (applies filters: namespaces, labels, experiment types, datasource)
-   ↓
-5. Bulk job submitted to Kruize
-   ↓
-6. Kruize generates recommendations for created experiments
-   ↓
-7. Kruize sends webhook callback to Optimizer
-   ↓
-8. Optimizer updates job/experiment counters
-   ↓
-9. Users view recommendations on Kruize UI
-```
-
-### Config Update Flow
-
-```
-1. Kruize sends config update to POST /webhook/config/bulk
-   ↓
-2. Optimizer evaluates the change:
-   → Config enabled with new schedule: timer created or rescheduled
-   → Config disabled: existing timer canceled
-   → Schedule shortened: next job executes immediately
-```
 
 ## Technology Stack
 
