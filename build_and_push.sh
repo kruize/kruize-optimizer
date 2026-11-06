@@ -76,7 +76,8 @@ validate_boolean "$QUARKUS_PUSH" "-p"
 # (tag from -t, otherwise the project version from pom.xml)
 if [ -z "$IMAGE_NAME" ]; then
     if [ -z "$IMAGE_TAG" ]; then
-        IMAGE_TAG="$(sed -n 's|^    <version>\(.*\)</version>.*|\1|p' pom.xml | head -n 1)"
+        # Let Maven resolve the version so POM formatting/inheritance doesn't matter
+        IMAGE_TAG="$(./mvnw -q -N help:evaluate -Dexpression=project.version -DforceStdout | tail -n 1)" || IMAGE_TAG=""
         if [ -z "$IMAGE_TAG" ]; then
             echo "Error: could not read project version from pom.xml" >&2
             exit 1
