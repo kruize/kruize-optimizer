@@ -1,0 +1,32 @@
+# Virtual environment
+venv/
+env/
+.venv/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Pytest cache
+.pytest_cache/
+.cache/
+
+# Test artifacts and working directories
+results/
+cloned_repos/
+*.log
+e2e-test-*.log
+*_recommendation.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
