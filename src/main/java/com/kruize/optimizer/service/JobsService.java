@@ -20,6 +20,10 @@ import com.kruize.optimizer.utils.OptimizerConstants.MessageConstants;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.jboss.logging.Logger;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 /**
  * Service for managing bulk job statistics
  */
@@ -33,13 +37,22 @@ public class JobsService {
     private int totalExperimentsCreated = 0;
     private int totalExperimentsProcessed = 0;
     private int totalExperimentsUnique = 0;
+    private final Map<String, Integer> jobsPerConfig = new ConcurrentHashMap<>();
 
     /**
-     * Increment the total jobs triggered counter
+     * Increment the total jobs triggered counter for a specific config
+     *
+     * @param configName Config name
      */
-    public synchronized void incrementJobsTriggered() {
+    public synchronized void incrementJobsTriggered(String configName) {
         totalJobsTriggered++;
-        LOG.debugf(MessageConstants.DEBUG_TOTAL_JOBS_TRIGGERED, totalJobsTriggered);
+        if (configName == null || configName.isBlank()) {
+            LOG.debugf(MessageConstants.DEBUG_TOTAL_JOBS_TRIGGERED, totalJobsTriggered);
+            return;
+        }
+        jobsPerConfig.merge(configName, 1, Integer::sum);
+        LOG.debugf("Total jobs triggered: %d (Config '%s': %d)",
+                totalJobsTriggered, configName, jobsPerConfig.get(configName));
     }
 
     /**
@@ -106,6 +119,15 @@ public class JobsService {
      */
     public int getTotalExperimentsUnique() {
         return totalExperimentsUnique;
+    }
+
+    /**
+     * Get jobs triggered per config
+     *
+     * @return Map of config name to job count
+     */
+    public Map<String, Integer> getJobsByConfig() {
+        return new HashMap<>(jobsPerConfig);
     }
 }
 

@@ -68,7 +68,7 @@ public class DatasourceResource {
             )).build();
             
         } catch (Exception e) {
-            LOG.error("Error fetching datasources", e);
+            LOG.errorf("Error fetching datasources: %s", e.getMessage());
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity(ApiResponse.error(MessageConstants.ERROR_FETCHING_DATASOURCES))
                     .build();

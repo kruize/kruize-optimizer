@@ -16,5 +16,11 @@
     "semeru",
     "hotspot",
     "quarkus"
+  ],
+  "bulk_configs": [
+    {
+      "name": "default-bulk-config",
+      "profile_version": "v1.0"
+    }
   ]
 }

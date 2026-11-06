@@ -57,7 +57,6 @@ public class DatasourceService {
                     .orElse(Collections.emptyList());
                     
         } catch (Exception e) {
-            LOG.error(MessageConstants.KRUIZE_SERVICE_UNAVAILABLE, e);
             throw new KruizeServiceException(
                 MessageConstants.KRUIZE_SERVICE_UNAVAILABLE,
                 e,

@@ -51,6 +51,10 @@ public final class OptimizerConstants {
         // bulk APIs
         public static final String BULK_ENDPOINT = "/bulk";
         public static final String JOB_ID = "job_id";
+
+        // bulk config APIs
+        public static final String BULK_CONFIGS_ENDPOINT = "/bulkConfigs";
+        public static final String CONFIG_NAME = "config_name";
     }
 
     // contains constants for Optimizer Service API endpoints
@@ -88,6 +92,7 @@ public final class OptimizerConstants {
 
         // Webhook endpoint
         public static final String WEBHOOK_PATH = "/webhook";
+        public static final String WEBHOOK_CONFIG_BULK_PATH = "/config/bulk";
     }
 
     // contains generic constants related to Optimizer application
@@ -126,7 +131,11 @@ public final class OptimizerConstants {
         public static final String ERROR_INVALID_WEBHOOK_PAYLOAD_NULL_OR_EMPTY = "Invalid webhook payload: payload is null or empty";
         public static final String ERROR_INVALID_WEBHOOK_PAYLOAD_MISSING_SUMMARY = "Invalid webhook payload: missing summary";
         public static final String ERROR_INVALID_WEBHOOK_PAYLOAD_MISSING_JOB_ID = "Invalid webhook payload: missing or empty jobId";
+        public static final String ERROR_INVALID_CONFIG_UPDATE_NULL_OR_EMPTY = "Invalid config update: config or config name is null/empty";
+        public static final String ERROR_PROCESSING_CONFIG_UPDATE_WEBHOOK = "Error processing config update webhook";
+        public static final String ERROR_PROCESSING_CONFIG_UPDATE_WEBHOOK_WITH_MESSAGE = "Error processing config update: %s";
         public static final String VALIDATION_ERROR_PAYLOAD_NULL_OR_EMPTY = "Invalid webhook payload: payload cannot be null or empty";
+        public static final String VALIDATION_ERROR_CONFIG_NAME_REQUIRED = "Invalid config update: config name is required";
         public static final String VALIDATION_ERROR_SUMMARY_REQUIRED = "Invalid webhook payload: summary is required";
         public static final String VALIDATION_ERROR_JOB_ID_REQUIRED = "Invalid webhook payload: jobId is required and cannot be empty";
         public static final String ERROR_FAILED_TO_INITIALIZE_BULK_SCHEDULER = "Failed to initialize bulk scheduler";
@@ -140,6 +149,10 @@ public final class OptimizerConstants {
         // Info messages
         public static final String NO_DATASOURCES_FOUND = "No datasources found";
         public static final String NO_PROFILES_FOUND = "No profiles found";
+        public static final String NO_METADATA_PROFILES_FOUND = "No metadata profiles found!";
+        public static final String NO_METRIC_PROFILES_FOUND = "No metric profiles found!";
+        public static final String NO_LAYERS_FOUND = "No layers found!";
+        public static final String NO_BULK_CONFIGS_FOUND = "No bulk configs found";
         public static final String PROFILE_ALREADY_EXISTS = "Profile already exists";
         public static final String PROFILE_NOT_FOUND = "Profile not found in local repository";
         public static final String INFO_FETCHING_JOBS_OVERVIEW = "Fetching jobs overview";
@@ -151,6 +164,7 @@ public final class OptimizerConstants {
         public static final String INFO_CALLING_BULK_API_WITH_PAYLOAD = "Calling bulk API with payload:\n%s";
         public static final String INFO_BULK_API_CALL_SUCCESSFUL = "Bulk API call successful. Response: %s";
         public static final String INFO_RECEIVED_WEBHOOK = "Received webhook with %d payload(s)";
+        public static final String INFO_RECEIVED_CONFIG_UPDATE_WEBHOOK = "Received config update webhook for: %s";
         public static final String INFO_RECEIVED_WEBHOOK_FOR_JOB = "Received webhook for Job %s with status %s";
         public static final String INFO_JOB_ALREADY_PROCESSED = "Job %s already processed. Skipping.";
         public static final String INFO_JOB_COMPLETED = "Job %s completed. Total: %d, Processed: %d, Existing: %d";
@@ -225,6 +239,7 @@ public final class OptimizerConstants {
         public static final String METADATA = "metadata";
         public static final String METRIC = "metric";
         public static final String LAYER = "layer";
+        public static final String BULK = "bulk_config";
     }
 
     // contains profile path constants
@@ -238,12 +253,14 @@ public final class OptimizerConstants {
         public static final String CONFIGS_INDEX_FILE = "configs/configsReferenceIndex.json";
         public static final String METADATA_PROFILES_DIR = "/metadata-profiles/";
         public static final String METRIC_PROFILES_DIR = "/metric-profiles/";
+        public static final String BULK_CONFIGS_DIR = "/bulk-configs/";
         public static final String LAYERS_DIR = "configs/layers/";
         public static final String JSON_EXTENSION = ".json";
         
         // JSON field names in configsReferenceIndex.json
         public static final String METADATA_PROFILES_KEY = "metadata_profiles";
         public static final String METRIC_PROFILES_KEY = "metric_profiles";
+        public static final String BULK_CONFIGS_KEY = "bulk_configs";
         public static final String LAYERS_KEY = "layers";
         public static final String NAME_KEY = "name";
         public static final String PROFILE_VERSION_KEY = "profile_version";

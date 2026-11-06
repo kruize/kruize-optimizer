@@ -67,7 +67,7 @@ public class MetadataProfileResource {
             )).build();
             
         } catch (Exception e) {
-            LOG.error("Error fetching metadata profiles", e);
+            LOG.errorf("Error fetching metadata profiles: %s", e.getMessage());
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity(ApiResponse.error(MessageConstants.ERROR_FETCHING_PROFILES))
                     .build();
@@ -94,7 +94,7 @@ public class MetadataProfileResource {
             )).build();
             
         } catch (Exception e) {
-            LOG.error("Error installing metadata profiles", e);
+            LOG.errorf("Error installing metadata profiles: %s", e.getMessage());
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity(ApiResponse.error(MessageConstants.ERROR_INSTALLING_PROFILES))
                     .build();
