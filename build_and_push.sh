@@ -8,7 +8,7 @@ usage() {
     echo ""
     echo "Options:"
     echo "  -i IMAGE_NAME    Full image name (registry/repository:tag)"
-    echo "  -t TAG           Image tag (default: 0.1) - used only if -i is not provided"
+    echo "  -t TAG           Image tag (default: project version from pom.xml) - used only if -i is not provided"
     echo "  -b BUILD         Build image true/false (default: true)"
     echo "  -p PUSH          Push image true/false (default: true)"
     echo "  -l PLATFORMS     Target platforms (default: linux/amd64,linux/arm64)"
@@ -34,7 +34,7 @@ validate_boolean() {
 }
 
 # Default values
-IMAGE_TAG="0.1"
+IMAGE_TAG=""
 QUARKUS_BUILD="true"
 QUARKUS_PUSH="true"
 QUARKUS_PLATFORMS="linux/amd64,linux/arm64"
@@ -73,8 +73,17 @@ validate_boolean "$QUARKUS_BUILD" "-b"
 validate_boolean "$QUARKUS_PUSH" "-p"
 
 # If IMAGE_NAME is not provided via -i, use default registry/repository with tag
+# (tag from -t, otherwise the project version from pom.xml)
 if [ -z "$IMAGE_NAME" ]; then
-    IMAGE_NAME="quay.io/kruize/optimizer:${IMAGE_TAG}"
+    if [ -z "$IMAGE_TAG" ]; then
+        # Let Maven resolve the version so POM formatting/inheritance doesn't matter
+        IMAGE_TAG="$(./mvnw -q -N help:evaluate -Dexpression=project.version -DforceStdout | tail -n 1)" || IMAGE_TAG=""
+        if [ -z "$IMAGE_TAG" ]; then
+            echo "Error: could not read project version from pom.xml" >&2
+            exit 1
+        fi
+    fi
+    IMAGE_NAME="quay.io/kruize/kruize-optimizer:${IMAGE_TAG}"
 fi
 
 echo "Building and pushing image: ${IMAGE_NAME}..."
