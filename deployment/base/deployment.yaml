@@ -18,7 +18,7 @@ spec:
       containers:
         - name: kruize-optimizer
           # TODO: This image will be updated with kruize org image
-          image: quay.io/kruize/kruize-optimizer:0.0.1
+          image: quay.io/kruize/kruize-optimizer:0.0.2
           imagePullPolicy: Always
           ports:
             - containerPort: 8080
