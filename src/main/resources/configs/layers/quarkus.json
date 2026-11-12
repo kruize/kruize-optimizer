@@ -12,7 +12,12 @@
         "datasource": "prometheus",
         "query": "container_cpu_usage_seconds_total{} * on(namespace, pod) group_left(label_com_redhat_component_name) kube_pod_labels{label_com_redhat_component_name=\"Quarkus\"}",
         "key": "pod"
-      }
+      },
+      {
+         "datasource": "prometheus",
+  	 "query": "container_cpu_usage_seconds_total{} * on(namespace, pod) group_left(label_ibm_runtimes_intelligence_monitoring) kube_pod_labels{label_ibm_runtimes_intelligence_monitoring=\"true\"}",
+         "key": "pod"
+       }
     ]
   },
   "tunables": [
