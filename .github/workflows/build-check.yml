@@ -45,5 +45,5 @@ jobs:
           ./mvnw clean package \
             -Dquarkus.container-image.build=true \
             -Dquarkus.container-image.push=false \
-            -Dquarkus.container-image.image="quay.io/kruizehub/optimizer:${{ steps.image_tag.outputs.TAG }}" \
+            -Dquarkus.container-image.image="quay.io/kruizehub/kruize-optimizer:${{ steps.image_tag.outputs.TAG }}" \
             -Dquarkus.jib.platforms="linux/amd64"
