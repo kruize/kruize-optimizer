@@ -20,8 +20,16 @@ concurrency:
 jobs:
   update-version-and-open-prs:
     runs-on: ubuntu-latest
+    environment: release
+    if: github.ref == 'refs/heads/mvp_demo' || github.ref == 'refs/heads/main'
 
     steps:
+      - name: Validate dispatch branch
+        run: |
+          if [ "${{ github.ref_name }}" != "mvp_demo" ] && [ "${{ github.ref_name }}" != "main" ]; then
+            echo "::error::This workflow can only be run from trusted branches (mvp_demo or main)."
+            exit 1
+          fi
       - name: Validate version input
         env:
           VERSION: ${{ inputs.version }}
@@ -111,7 +119,7 @@ jobs:
           title: "chore: update pom.xml version to ${{ inputs.version }}"
           body: "Automated PR updating version to `${{ inputs.version }}` targeting `mvp_demo`."
           add-paths: pom.xml
-          sign-commits: true
+          signoff: true
           delete-branch: true
 
       # Opens downstream PR from mvp_demo into main if not already present.
