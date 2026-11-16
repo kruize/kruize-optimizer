@@ -12,10 +12,9 @@ permissions:
   contents: write
   pull-requests: write
 
-# One queue per requested version, so runs for different versions are never
-# replaced by a newer pending dispatch.
+# Use one concurrency group for all release runs so the open-PR check and PR creation are serialized
 concurrency:
-  group: prepare-release-${{ inputs.version }}
+  group: prepare-release
   cancel-in-progress: false
 
 jobs:
@@ -68,11 +67,22 @@ jobs:
             echo "::error::Requested version '$VERSION' must be newer than the current version '$CURRENT'."
             exit 1
           fi
+        
+      # PRs created with GITHUB_TOKEN do not trigger other workflows (e.g. compile/test checks)
+      # and may be blocked by branch protection, so use a GitHub App installation token.
+      # Requires the APP_ID variable and APP_PRIVATE_KEY secret. The app needs
+      # Contents: write and Pull requests: write on this repository.
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ vars.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
 
       - name: Ensure no other version bump PR is open
         env:
           VERSION: ${{ inputs.version }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           OTHER=$(gh pr list --repo "$GITHUB_REPOSITORY" --base mvp_demo --state open --json number,headRefName \
             --jq "[.[] | select(.headRefName | startswith(\"bump-version-\")) | select(.headRefName != \"bump-version-$VERSION\")] | map(\"#\" + (.number | tostring)) | join(\", \")")
@@ -86,17 +96,6 @@ jobs:
           VERSION: ${{ inputs.version }}
         run: |
           mvn -B -ntp versions:set -DnewVersion="$VERSION" -DgenerateBackupPoms=false
-
-      # PRs created with GITHUB_TOKEN do not trigger other workflows (e.g. compile/test checks)
-      # and may be blocked by branch protection, so use a GitHub App installation token.
-      # Requires the APP_ID variable and APP_PRIVATE_KEY secret. The app needs
-      # Contents: write and Pull requests: write on this repository.
-      - name: Generate GitHub App token
-        id: app-token
-        uses: actions/create-github-app-token@v2
-        with:
-          app-id: ${{ vars.APP_ID }}
-          private-key: ${{ secrets.APP_PRIVATE_KEY }}
 
       # Uses peter-evans/create-pull-request to detect pom.xml changes, commit, and create the PR.
       - name: Create Pull Request to mvp_demo
