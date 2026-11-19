@@ -24,8 +24,8 @@ Kruize Optimizer provides a convenient build script ([`build_and_push.sh`](../bu
 
 | Option | Description | Default |
 |--------|-------------|---------|
-| `-i IMAGE_NAME` | Full image name (registry/repository:tag) | quay.io/kruize/optimizer:0.1 |
-| `-t TAG` | Image tag (used if -i not provided) | 0.1 |
+| `-i IMAGE_NAME` | Full image name (registry/repository:tag) | quay.io/kruize/kruize-optimizer:&lt;project version&gt; |
+| `-t TAG` | Image tag (used if -i not provided) | Project version from `pom.xml` |
 | `-b BUILD` | Build image (true/false) | true |
 | `-p PUSH` | Push image (true/false) | true |
 | `-l PLATFORMS` | Target platforms | linux/amd64,linux/arm64 |
@@ -51,7 +51,7 @@ Build and push with a specific tag (run `docker login <registry-url>` first):
 ./build_and_push.sh -t 1.0.0
 ```
 
-This creates: `quay.io/kruize/optimizer:1.0.0`
+This creates: `quay.io/kruize/kruize-optimizer:1.0.0`
 
 ### 3. Build and Push with Full Image Name
 
