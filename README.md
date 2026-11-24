@@ -9,6 +9,18 @@ A lightweight Quarkus‑based microservice that automates configuration, experim
 
 - **Java 25** - Required to build the Docker image and run the application
 
+## Development
+
+### Run in Development Mode
+
+```bash
+# On x86-64 hardware supporting AVX-512 VBMI, set the CVE-2026-114938 mitigation flag
+export JDK_JAVA_OPTIONS="-XX:-UseBASE64Intrinsics"
+
+# Run Quarkus in dev mode
+./mvnw quarkus:dev
+```
+
 ## Deployment
 
 ### Deploy to Kind (local development)
