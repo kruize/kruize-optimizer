@@ -161,7 +161,11 @@ kruize:
 See the [Configuration Guide](configurables.md) for more details.
 
 4. Run in development mode:
+
+> **Security Note (CVE-2026-114938 / java4shell)**: On x86-64 systems supporting AVX-512 VBMI (Intel Ice Lake+, AMD Zen 4+), export `JDK_JAVA_OPTIONS="-XX:-UseBASE64Intrinsics"` before running in dev mode to disable vulnerable hardware-accelerated Base64 intrinsics:
+
 ```bash
+export JDK_JAVA_OPTIONS="-XX:-UseBASE64Intrinsics"
 ./mvnw quarkus:dev
 ```
 
