@@ -23,6 +23,10 @@ spec:
           ports:
             - containerPort: 8080
           env:
+            # CVE-2026-114938 mitigation (java4shell)
+            - name: JDK_JAVA_OPTIONS
+              value: "-XX:-UseBASE64Intrinsics"
+
             # Swagger UI Configuration
             - name: ENABLE_SWAGGER
               value: "false"
