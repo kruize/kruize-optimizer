@@ -2,6 +2,9 @@ quarkus:
   application:
     name: kruize-optimizer-service
     version: 1.0.0
+  jib:
+    environment-variables:
+      JDK_JAVA_OPTIONS: "-XX:-UseBASE64Intrinsics"
   smallrye-openapi:
     path: /openapi
   swagger-ui:
